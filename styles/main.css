@@ -46,6 +46,8 @@
     --gray-700: #3c4043;
     --gray-900: #202124;
 
+    --topbar-height: 3.75375rem; /* +10% по высоте */
+
     --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
@@ -104,6 +106,8 @@
     position: sticky;
     top: 0;
     z-index: 100;
+    display: flex;
+    align-items: center;
     background: var(--dark-bg);
     border-bottom: 1px solid var(--dark-border);
     box-shadow: none;
@@ -114,7 +118,7 @@
 .topbar-inner {
     max-width: 1470px;
     margin: 0 auto;
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: var(--spacing-sm) var(--spacing-lg);
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
@@ -772,7 +776,6 @@
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
-    contain: layout;
 }
 
 .divider {
@@ -818,8 +821,6 @@
     position: relative;
     overflow: hidden;
     background: var(--card);
-    border: 1px solid var(--border);
-    border-top: none;
     border-radius: 0 0 6px 6px;
     padding: 1.25rem 1.75rem;
     padding-top: var(--spacing-lg);
@@ -964,8 +965,7 @@
     background: var(--card);
     border-radius: 4px;
     padding: 1.5rem 1.75rem;
-    border: 1px solid var(--border);
-    transition: border-color var(--transition-fast), background var(--transition-fast);
+    transition: background var(--transition-fast);
     flex: 1 1 100%;
     min-width: 0;
     contain: layout style;
@@ -1759,7 +1759,6 @@
 
 .aside .widget {
     background: var(--card);
-    border: 1px solid var(--border);
     border-radius: 6px;
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-xl);
@@ -1773,6 +1772,8 @@
 
 .aside .widget:first-child {
     margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 }
 
 .aside .widget[open] {

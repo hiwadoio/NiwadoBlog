@@ -1049,19 +1049,28 @@
         padding: 0 5em;
         max-width: calc(1470px * 0.85 * 1.07 * 0.95 * 1.02);
         grid-template-columns: 1fr 1px 320px;
+        overflow: visible;
+        contain: none;
+    }
+
+    main.page {
+        overflow: visible;
+        contain: none;
     }
 
     .divider {
         display: block;
     }
 
+    /* fixed вместо sticky — убирает прыжок при скролле */
     .aside {
-        position: sticky;
-        top: 76px;
-        max-height: calc(100vh - 76px);
+        position: fixed;
+        top: var(--topbar-height, 4.75rem);
+        right: calc((100vw - min(1470px * 0.85 * 1.07 * 0.95 * 1.02, 100vw)) / 2 + 5em);
+        width: 320px;
+        max-height: calc(100vh - var(--topbar-height, 4.75rem));
         overflow-y: auto;
         overflow-x: hidden;
-        align-self: start;
         padding-right: 0.625rem;
         scrollbar-width: thin;
         scrollbar-gutter: stable;
@@ -1119,6 +1128,12 @@
 
     .page {
         align-items: start;
+    }
+
+    .topbar {
+        contain: none;
+        min-height: var(--topbar-height, 4.75rem);
+        box-sizing: border-box;
     }
 
     .topbar-inner {
