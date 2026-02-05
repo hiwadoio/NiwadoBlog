@@ -103,6 +103,10 @@
                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="m18 15-6-6-6 6" />
             </symbol>
+            <symbol id="icon-arrow-up-thick" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="m18 15-6-6-6 6" stroke-width="2.95" />
+            </symbol>
             <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -157,7 +161,7 @@
                             role="menuitem">Поиск</a>
                     </nav>
                     <div class="action-divider"></div>
-                    <a class="action-item" href="/register" role="menuitem">Регистрация</a>
+                    <a class="action-item action-item-register" href="/register" role="menuitem">Регистрация</a>
                     <a class="action-item action-item-primary" href="/login" role="menuitem">Войти</a>
                 </div>
             </details>
@@ -663,14 +667,10 @@
         <div class="divider" aria-hidden="true"></div>
 
         <aside class="aside">
-            <details class="widget widget--awaiting" open aria-labelledby="awaiting-title">
-                <summary class="widget-summary">
+            <div class="widget widget--awaiting widget--no-collapse" aria-labelledby="awaiting-title">
+                <div class="widget-summary">
                     <h4 id="awaiting-title">В ожидании</h4>
-                    <span class="widget-summary-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2">
-                            <use href="#icon-chevron-down" />
-                        </svg></span>
-                </summary>
+                </div>
                 <div class="widget-content">
                     <span class="widget-awaiting-bg-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -694,7 +694,7 @@
                         </li>
                     </ul>
                 </div>
-            </details>
+            </div>
 
             <details class="widget widget--popular-articles" open aria-labelledby="popular-articles-title">
                 <summary class="widget-summary">
@@ -716,8 +716,8 @@
                                 <span class="article-title">Как изменится цифровая экономика в 2026 году</span>
                                 <span class="up" aria-label="Поднялось на 11 позиций"><span class="icon icon--xs"
                                         aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true">
-                                        <use href="#icon-chevron-up" />
-                                    </svg></span> 11</span>
+                                            <use href="#icon-chevron-up" />
+                                        </svg></span> 11</span>
                                 <div class="article-main">
                                     <span class="article-excerpt">Эксперты прогнозируют рост сегментов маркетинга, ИИ и
                                         гейминга. Разбираем ключевые тренды, возможности для бизнеса и риски, о которых
@@ -747,8 +747,8 @@
                                 <span class="article-title">AI‑Ready сайты: главный тренд 2026–2027</span>
                                 <span class="up" aria-label="Поднялось на 8 позиций"><span class="icon icon--xs"
                                         aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true">
-                                        <use href="#icon-chevron-up" />
-                                    </svg></span> 8</span>
+                                            <use href="#icon-chevron-up" />
+                                        </svg></span> 8</span>
                                 <div class="article-main">
                                     <span class="article-excerpt">Почему сайтам уже недостаточно быть удобными для
                                         пользователей и поисковиков. Что такое AI‑Ready, как к этому готовиться и какие
@@ -778,8 +778,8 @@
                                 <span class="article-title">Как построить отдел продаж в онлайн-школе</span>
                                 <span class="up" aria-label="Поднялось на 5 позиций"><span class="icon icon--xs"
                                         aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true">
-                                        <use href="#icon-chevron-up" />
-                                    </svg></span> 5</span>
+                                            <use href="#icon-chevron-up" />
+                                        </svg></span> 5</span>
                                 <div class="article-main">
                                     <span class="article-excerpt">Разбираем пошаговый план создания отдела продаж от
                                         найма
@@ -830,11 +830,11 @@
                                             бизнеса.</span>
                                     </a>
                                     <span class="popular-rating" aria-label="Рейтинг: 124" title="Рейтинг">
-                                <span class="popular-rating-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="14"
-                                        height="14" aria-hidden="true">
-                                        <use href="#icon-thumb-up" />
-                                    </svg></span>
-                                <span class="popular-rating-value">124</span>
+                                        <span class="popular-rating-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
+                                                width="14" height="14" aria-hidden="true">
+                                                <use href="#icon-thumb-up" />
+                                            </svg></span>
+                                        <span class="popular-rating-value">124</span>
                                     </span>
                                 </div>
                                 <div class="popular-head">
@@ -845,7 +845,9 @@
                                     <span class="popular-meta">
                                         <time class="popular-meta-time" datetime="2026-01-28T09:00:00"><span
                                                 class="icon icon--xs" aria-hidden="true"><svg viewBox="0 0 24 24"
-                                                    aria-hidden="true"><use href="#icon-clock" /></svg></span> 2 часа назад</time>
+                                                    aria-hidden="true">
+                                                    <use href="#icon-clock" />
+                                                </svg></span> 2 часа назад</time>
                                     </span>
                                 </div>
                             </div>
@@ -858,11 +860,11 @@
                                             условиям.</span>
                                     </a>
                                     <span class="popular-rating" aria-label="Рейтинг: 98" title="Рейтинг">
-                                <span class="popular-rating-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="14"
-                                        height="14" aria-hidden="true">
-                                        <use href="#icon-thumb-up" />
-                                    </svg></span>
-                                <span class="popular-rating-value">98</span>
+                                        <span class="popular-rating-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
+                                                width="14" height="14" aria-hidden="true">
+                                                <use href="#icon-thumb-up" />
+                                            </svg></span>
+                                        <span class="popular-rating-value">98</span>
                                     </span>
                                 </div>
                                 <div class="popular-head">
@@ -873,7 +875,9 @@
                                     <span class="popular-meta">
                                         <time class="popular-meta-time" datetime="2026-01-28T08:00:00"><span
                                                 class="icon icon--xs" aria-hidden="true"><svg viewBox="0 0 24 24"
-                                                    aria-hidden="true"><use href="#icon-clock" /></svg></span> 3 часа назад</time>
+                                                    aria-hidden="true">
+                                                    <use href="#icon-clock" />
+                                                </svg></span> 3 часа назад</time>
                                     </span>
                                 </div>
                             </div>
@@ -886,11 +890,11 @@
                                             примеров.</span>
                                     </a>
                                     <span class="popular-rating" aria-label="Рейтинг: 76" title="Рейтинг">
-                                <span class="popular-rating-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="14"
-                                        height="14" aria-hidden="true">
-                                        <use href="#icon-thumb-up" />
-                                    </svg></span>
-                                <span class="popular-rating-value">76</span>
+                                        <span class="popular-rating-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
+                                                width="14" height="14" aria-hidden="true">
+                                                <use href="#icon-thumb-up" />
+                                            </svg></span>
+                                        <span class="popular-rating-value">76</span>
                                     </span>
                                 </div>
                                 <div class="popular-head">
@@ -901,7 +905,9 @@
                                     <span class="popular-meta">
                                         <time class="popular-meta-time" datetime="2026-01-28T06:00:00"><span
                                                 class="icon icon--xs" aria-hidden="true"><svg viewBox="0 0 24 24"
-                                                    aria-hidden="true"><use href="#icon-clock" /></svg></span> 5 часов назад</time>
+                                                    aria-hidden="true">
+                                                    <use href="#icon-clock" />
+                                                </svg></span> 5 часов назад</time>
                                     </span>
                                 </div>
                             </div>
@@ -928,7 +934,7 @@
     <button class="scroll-top" type="button" aria-label="Прокрутить наверх">
         <span class="scroll-top-icon icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"
                 aria-hidden="true" focusable="false">
-                <use href="#icon-arrow-up" />
+                <use href="#icon-arrow-up-thick" />
             </svg></span>
     </button>
 

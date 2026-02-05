@@ -961,53 +961,66 @@
     .scroll-top {
         position: fixed;
         inset-inline-end: 1.5rem;
+        inset-inline-start: auto;
         inset-block-end: 1.5rem;
         inset-block-start: auto;
-        inset-inline-start: auto;
         width: 2.25rem;
         height: 2.25rem;
-        border-radius: 8px;
-        border: 1px solid #d1d5db;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: none;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: #d6d7d8;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all var(--transition-fast);
+        overflow: hidden;
     }
 
     .scroll-top .scroll-top-icon {
-        position: static;
-        top: auto;
-        left: auto;
-        transform: none;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 1.07rem;
+        height: 1.07rem;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0;
+        background: transparent;
+        color: #fff;
         font-size: 1.25rem;
-        color: var(--gray-600);
-        font-weight: 500;
+        box-shadow: none;
+        filter: none;
+        line-height: 0;
+    }
+
+    .scroll-top .scroll-top-icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        box-shadow: none;
+        filter: none;
     }
 
     .scroll-top:hover {
-        background: rgba(255, 255, 255, 1);
-        border-color: var(--gray-400);
-        box-shadow: none;
-        transform: translateY(-2px);
+        background: #b6b7b8;
     }
 
     .scroll-top:hover .scroll-top-icon {
-        transform: translateY(-0.125rem);
-        color: var(--gray-900);
+        background: transparent;
+        color: #fff;
     }
 
     .scroll-top.is-visible:hover {
-        background: rgba(255, 255, 255, 0.95);
-        border-color: #d1d5db;
-        transform: none;
+        background: #b6b7b8;
     }
 
     .scroll-top.is-visible:hover .scroll-top-icon {
-        color: var(--gray-600);
-        transform: none;
+        color: #fff;
     }
 }
 
@@ -1016,18 +1029,18 @@
     /* Полоса «наверх» — от 1026px; на 1024–1025 показывается кнопка */
     .scroll-top {
         position: fixed;
-        inset-inline-end: 0;
+        inset-inline-start: 0;
+        inset-inline-end: auto;
         inset-block: 0;
-        width: 1.5rem;
+        width: 3.25rem;
         height: 100dvh;
         border: none;
-        border-inline-start: 1px solid var(--border);
         background: transparent;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--gray-400);
-        transition: color 0.12s ease;
+        color: #fff;
+        transition: color 0.12s ease, background 0.2s ease;
     }
 
     .scroll-top .scroll-top-icon {
@@ -1035,20 +1048,40 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 0.875rem;
-        height: 0.875rem;
+        width: 1.8rem;
+        height: 1.8rem;
+        border-radius: 50%;
+        background: #d6d7d8;
         display: flex;
-        color: inherit;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        transition: background 0.2s ease;
+        box-shadow: none;
+        filter: none;
+    }
+
+    .scroll-top .scroll-top-icon svg {
+        width: 1.07rem;
+        height: 1.07rem;
+        box-shadow: none;
+        filter: none;
     }
 
     .scroll-top:hover {
-        color: var(--gray-600);
+        background: #e6e6e6;
+        color: #fff;
+    }
+
+    .scroll-top:hover .scroll-top-icon {
+        background: #b6b7b8;
     }
 
     .page {
         padding: 0 5em;
         max-width: calc(1470px * 0.85 * 1.07 * 0.95 * 1.02);
         grid-template-columns: 1fr 1px 320px;
+        column-gap: var(--spacing-lg);
         overflow: visible;
         contain: none;
     }
@@ -1079,6 +1112,7 @@
 
     .main {
         padding-bottom: 4vh;
+        margin-right: calc(-0.5 * var(--spacing-lg));
     }
 
     .aside::-webkit-scrollbar {
@@ -1146,7 +1180,7 @@
     }
 
     .menu a {
-        font-size: 0.875rem;
+        font-size: 0.83rem;
     }
 }
 
@@ -1156,52 +1190,66 @@
     .scroll-top {
         position: fixed;
         inset-inline-end: 1.5rem;
+        inset-inline-start: auto;
         inset-block-end: 1.5rem;
         inset-block-start: auto;
-        inset-inline-start: auto;
         width: 2.25rem;
         height: 2.25rem;
-        border-radius: 8px;
-        border: 1px solid #d1d5db;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: none;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: #d6d7d8;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--gray-600);
+        color: #fff;
         transition: all var(--transition-fast);
+        overflow: hidden;
     }
 
     .scroll-top .scroll-top-icon {
-        position: static;
-        top: auto;
-        left: auto;
-        transform: none;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 1.07rem;
+        height: 1.07rem;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0;
+        background: transparent;
+        color: #fff;
         font-size: 1.25rem;
-        font-weight: 500;
-        color: inherit;
+        box-shadow: none;
+        filter: none;
+        line-height: 0;
+    }
+
+    .scroll-top .scroll-top-icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        box-shadow: none;
+        filter: none;
     }
 
     .scroll-top:hover {
-        background: rgba(255, 255, 255, 1);
-        border-color: var(--gray-400);
-        transform: translateY(-2px);
+        background: #b6b7b8;
     }
 
     .scroll-top:hover .scroll-top-icon {
-        transform: translateY(-0.125rem);
-        color: var(--gray-900);
+        background: transparent;
+        color: #fff;
     }
 
     .scroll-top.is-visible:hover {
-        background: rgba(255, 255, 255, 0.95);
-        border-color: #d1d5db;
-        transform: none;
+        background: #b6b7b8;
     }
 
     .scroll-top.is-visible:hover .scroll-top-icon {
-        color: var(--gray-600);
-        transform: none;
+        color: #fff;
     }
 }
