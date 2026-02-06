@@ -369,15 +369,17 @@
             lightboxImg.alt = '';
             lightbox.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
+            requestAnimationFrame(() => lightboxImg.focus());
         };
 
         const closeLightbox = () => {
-            lightboxOpener?.focus?.();
+            const opener = lightboxOpener;
             lightboxOpener = null;
             requestAnimationFrame(() => {
                 lightbox.setAttribute('aria-hidden', 'true');
                 lightboxImg.removeAttribute('src');
                 document.body.style.overflow = '';
+                opener?.focus?.();
             });
         };
 
@@ -453,12 +455,13 @@
             return;
         }
         if (lightbox?.getAttribute('aria-hidden') === 'false') {
-            lightboxOpener?.focus?.();
+            const opener = lightboxOpener;
             lightboxOpener = null;
             requestAnimationFrame(() => {
                 lightbox.setAttribute('aria-hidden', 'true');
                 lightboxImg?.removeAttribute('src');
                 document.body.style.overflow = '';
+                opener?.focus?.();
             });
             event.preventDefault();
         }

@@ -1328,9 +1328,22 @@
         scrollbar-color: rgba(107, 114, 128, 0.3) transparent;
     }
 
+    /* Первая колонка (main/profile/любая) — одинаковый отступ до divider на всех страницах */
+    .page > *:first-child {
+        margin-right: calc(-0.5 * var(--spacing-lg));
+    }
+
     .main {
         padding-bottom: 4vh;
-        margin-right: calc(-0.5 * var(--spacing-lg));
+    }
+
+    /*
+     * Контент с классом .page-col-edge доходит до края колонки (без лишнего отступа до divider).
+     * Добавлять на обёртку контента первой колонки, если у неё есть свой padding справа —
+     * иначе расстояние до divider будет больше, чем на остальных страницах.
+     */
+    .page-col-edge {
+        padding-right: 0;
     }
 
     .main .card-wrapper:first-child .card {
