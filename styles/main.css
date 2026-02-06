@@ -111,6 +111,29 @@ body {
     font-size: 85.75%;
 }
 
+body.scroll-lock .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 101;
+}
+
+body.scroll-lock .main-scroll-wrap {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    bottom: 0;
+    overflow: hidden;
+    z-index: 100;
+}
+
+body.scroll-lock .search-popup,
+body.scroll-lock .lightbox {
+    z-index: 102;
+}
+
 .topbar-inner {
     max-width: 1470px;
     margin: 0 auto;

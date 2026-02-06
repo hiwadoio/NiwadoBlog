@@ -13,11 +13,67 @@
         };
     };
 
+    let bodyScrollLockY = null;
+    const topbarEl = document.querySelector('.topbar');
+    const asideEl = document.querySelector('.aside');
+
+    if (topbarEl && !document.querySelector('.main-scroll-wrap')) {
+        const wrap = document.createElement('div');
+        wrap.className = 'main-scroll-wrap';
+        let el = topbarEl.nextElementSibling;
+        while (el) {
+            const next = el.nextElementSibling;
+            if (!el.matches('.search-popup, .lightbox')) wrap.appendChild(el);
+            el = next;
+        }
+        topbarEl.after(wrap);
+    }
+
+    const getScrollbarWidth = () => Math.round(window.innerWidth - document.documentElement.clientWidth);
+
+    const lockBodyScroll = () => {
+        if (bodyScrollLockY !== null) return;
+        bodyScrollLockY = Math.round(window.scrollY);
+        const wrap = document.querySelector('.main-scroll-wrap');
+        if (wrap && topbarEl) {
+            const top = Math.round(topbarEl.offsetHeight - bodyScrollLockY);
+            const sb = getScrollbarWidth();
+            document.body.style.minHeight = `${document.documentElement.scrollHeight}px`;
+            document.body.style.overflow = document.documentElement.style.overflow = 'hidden';
+            document.body.classList.add('scroll-lock');
+            if (sb > 0) {
+                document.body.style.paddingRight = topbarEl.style.paddingRight = `${sb}px`;
+                if (asideEl) asideEl.style.transform = `translateX(-${sb}px)`;
+            }
+            wrap.style.cssText = `position:fixed;top:${top}px;left:0;right:0;width:100%;bottom:0;overflow:hidden;z-index:100;box-sizing:border-box${sb > 0 ? `;padding-right:${sb}px` : ''}`;
+        } else {
+            Object.assign(document.body.style, {
+                position: 'fixed', top: `-${bodyScrollLockY}px`, left: '0', right: '0', width: '100%', overflow: 'hidden'
+            });
+        }
+    };
+
+    const unlockBodyScroll = () => {
+        if (bodyScrollLockY === null) return;
+        const y = bodyScrollLockY;
+        bodyScrollLockY = null;
+        document.body.classList.remove('scroll-lock');
+        document.documentElement.style.overflow = '';
+        const wrap = document.querySelector('.main-scroll-wrap');
+        if (wrap) wrap.style.cssText = '';
+        ['minHeight', 'paddingRight', 'overflow', 'position', 'top', 'left', 'right', 'width'].forEach((k) => { document.body.style[k] = ''; });
+        if (topbarEl) topbarEl.style.paddingRight = '';
+        if (asideEl) asideEl.style.transform = '';
+        const prev = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, y);
+        document.documentElement.style.scrollBehavior = prev;
+    };
+
+    const actionMenuEl = document.querySelector('.action-menu');
     document.addEventListener('click', (event) => {
-        const menu = document.querySelector('.action-menu');
-        if (!menu?.hasAttribute('open')) return;
-        if (!menu.contains(event.target)) {
-            menu.removeAttribute('open');
+        if (actionMenuEl?.hasAttribute('open') && !actionMenuEl.contains(event.target)) {
+            actionMenuEl.removeAttribute('open');
         }
     });
 
@@ -100,7 +156,7 @@
         if (!actions || !commentBody) return;
 
         const template = document.getElementById('comment-reply-form-template');
-        if (!template || !template.content) return;
+        if (!template?.content) return;
 
         const existing = commentBody.querySelector('.comment-reply-form');
         if (existing) {
@@ -109,33 +165,22 @@
         }
 
         const clone = template.content.cloneNode(true);
-        const row = btn.closest('.comment-actions-row');
-        (row || actions).after(clone);
+        (btn.closest('.comment-actions-row') || actions).after(clone);
     });
 
     document.addEventListener('click', (event) => {
-        const btn = event.target.closest('.comment-toggle-btn[data-comment-toggle]');
+        const btn = event.target.closest('.comment-toggle-btn[data-comment-toggle], .comment-branch-toggle-btn[data-branch-toggle]');
         if (!btn) return;
         const item = btn.closest('.comments-feed-item');
         const wrap = btn.closest('.comment-toggle-wrap');
-        const tooltip = wrap?.querySelector('.comment-toggle-tooltip');
         if (!item) return;
-        item.classList.toggle('is-collapsed');
-        const label = item.classList.contains('is-collapsed') ? 'Развернуть комментарий' : 'Свернуть комментарий';
+        const isBranch = btn.matches('[data-branch-toggle]');
+        const collapsedClass = isBranch ? 'is-branch-collapsed' : 'is-collapsed';
+        const labels = isBranch ? ['Развернуть ветку', 'Свернуть ветку'] : ['Развернуть комментарий', 'Свернуть комментарий'];
+        item.classList.toggle(collapsedClass);
+        const label = item.classList.contains(collapsedClass) ? labels[0] : labels[1];
         btn.setAttribute('aria-label', label);
-        if (tooltip) tooltip.textContent = label;
-    });
-
-    document.addEventListener('click', (event) => {
-        const btn = event.target.closest('.comment-branch-toggle-btn[data-branch-toggle]');
-        if (!btn) return;
-        const item = btn.closest('.comments-feed-item');
-        const wrap = btn.closest('.comment-toggle-wrap');
         const tooltip = wrap?.querySelector('.comment-toggle-tooltip');
-        if (!item) return;
-        item.classList.toggle('is-branch-collapsed');
-        const label = item.classList.contains('is-branch-collapsed') ? 'Развернуть ветку' : 'Свернуть ветку';
-        btn.setAttribute('aria-label', label);
         if (tooltip) tooltip.textContent = label;
     });
 
@@ -201,35 +246,34 @@
             event.preventDefault();
             const dropdown = option.closest('.comments-feed-sort-dropdown');
             const triggerText = dropdown?.querySelector('.comments-feed-sort-trigger-text');
-            if (triggerText) {
-                triggerText.textContent = option.textContent.trim();
-                dropdown.querySelectorAll('.comments-feed-sort-option').forEach((o) => o.classList.remove('is-active'));
-                option.classList.add('is-active');
-                dropdown?.removeAttribute('open');
-            }
+            if (!dropdown || !triggerText) return;
+            triggerText.textContent = option.textContent.trim();
+            dropdown.querySelectorAll('.comments-feed-sort-option').forEach((o) => o.classList.remove('is-active'));
+            option.classList.add('is-active');
+            dropdown.removeAttribute('open');
             return;
         }
         const openDropdown = document.querySelector('.comments-feed-sort-dropdown[open]');
-        if (openDropdown && !openDropdown.contains(event.target)) {
-            openDropdown.removeAttribute('open');
+        if (openDropdown && !openDropdown.contains(event.target)) openDropdown.removeAttribute('open');
+    });
+
+    const revealVeil = (target) => {
+        const item = target?.closest('.comment-text-veil')?.closest('.comments-feed-item');
+        if (item) item.classList.add('is-revealed');
+    };
+    document.addEventListener('click', (e) => revealVeil(e.target));
+    document.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.comment-text-veil')) {
+            e.preventDefault();
+            revealVeil(e.target);
         }
     });
 
-    document.addEventListener('click', (event) => {
-        const veil = event.target.closest('.comment-text-veil');
-        if (!veil) return;
-        const item = veil.closest('.comments-feed-item');
-        if (item) item.classList.add('is-revealed');
-    });
-
-    document.addEventListener('keydown', (event) => {
-        const veil = event.target.closest('.comment-text-veil');
-        if (!veil) return;
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault();
-        const item = veil.closest('.comments-feed-item');
-        if (item) item.classList.add('is-revealed');
-    });
+    const closeCardTagsPopup = (popup, trigger) => {
+        if (document.activeElement && popup.contains(document.activeElement)) trigger.focus();
+        popup.setAttribute('hidden', '');
+        trigger.setAttribute('aria-expanded', 'false');
+    };
 
     document.addEventListener('click', (e) => {
         const trigger = e.target.closest('.card-tags-trigger');
@@ -237,14 +281,11 @@
             e.stopPropagation();
             const mobile = trigger.closest('.card-tags-mobile');
             const popup = mobile?.querySelector('.card-tags-popup');
-            const footer = trigger.closest('.card-footer');
-            const tagsSource = footer?.querySelector('.card-footer-tags');
+            const tagsSource = trigger.closest('.card-footer')?.querySelector('.card-footer-tags');
             if (!popup || !tagsSource) return;
 
             if (trigger.getAttribute('aria-expanded') === 'true') {
-                if (document.activeElement && popup.contains(document.activeElement)) trigger.focus();
-                popup.setAttribute('hidden', '');
-                trigger.setAttribute('aria-expanded', 'false');
+                closeCardTagsPopup(popup, trigger);
             } else {
                 document.querySelectorAll('.card-tags-popup').forEach((p) => p.setAttribute('hidden', ''));
                 document.querySelectorAll('.card-tags-trigger').forEach((t) => t.setAttribute('aria-expanded', 'false'));
@@ -258,27 +299,29 @@
         const openPopup = document.querySelector('.card-tags-popup:not([hidden])');
         if (openPopup) {
             const mobile = openPopup.closest('.card-tags-mobile');
-            if (mobile && !mobile.contains(e.target)) {
-                const t = mobile.querySelector('.card-tags-trigger');
-                if (t) {
-                    if (document.activeElement && openPopup.contains(document.activeElement)) t.focus();
-                    openPopup.setAttribute('hidden', '');
-                    t.setAttribute('aria-expanded', 'false');
-                }
-            }
+            const t = mobile?.querySelector('.card-tags-trigger');
+            if (t && mobile && !mobile.contains(e.target)) closeCardTagsPopup(openPopup, t);
         }
     });
 
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
-        const trigger = document.querySelector('.card-tags-trigger[aria-expanded="true"]');
-        if (!trigger) return;
-        const popup = trigger.closest('.card-tags-mobile')?.querySelector('.card-tags-popup');
-        if (popup) {
-            if (document.activeElement && popup.contains(document.activeElement)) trigger.focus();
-            popup.setAttribute('hidden', '');
-            trigger.setAttribute('aria-expanded', 'false');
+        let closed = false;
+        const cardTagsTrigger = document.querySelector('.card-tags-trigger[aria-expanded="true"]');
+        if (cardTagsTrigger) {
+            const popup = cardTagsTrigger.closest('.card-tags-mobile')?.querySelector('.card-tags-popup');
+            if (popup) {
+                closeCardTagsPopup(popup, cardTagsTrigger);
+                closed = true;
+            }
+        } else if (searchPopup?.getAttribute('aria-hidden') === 'false') {
+            closeSearchPopup();
+            closed = true;
+        } else if (lightbox?.getAttribute('aria-hidden') === 'false') {
+            closeLightbox();
+            closed = true;
         }
+        if (closed) e.preventDefault();
     });
 
     document.addEventListener('click', (e) => {
@@ -286,10 +329,7 @@
         if (tagLink) {
             const popup = tagLink.closest('.card-tags-popup');
             const trigger = popup?.closest('.card-tags-mobile')?.querySelector('.card-tags-trigger');
-            if (trigger) {
-                popup.setAttribute('hidden', '');
-                trigger.setAttribute('aria-expanded', 'false');
-            }
+            if (trigger) closeCardTagsPopup(popup, trigger);
         }
     });
 
@@ -308,11 +348,11 @@
     const closeSearchPopup = () => {
         if (searchPopup) {
             const searchTrigger = document.querySelector('[data-search-trigger]');
-            if (searchTrigger) searchTrigger.focus();
+            if (searchTrigger) searchTrigger.focus({ preventScroll: true });
             searchPopup.setAttribute('aria-hidden', 'true');
             searchPopup.setAttribute('inert', '');
         }
-        document.body.style.overflow = '';
+        unlockBodyScroll();
     };
 
     const closeLightbox = () => {
@@ -322,13 +362,10 @@
         lightboxOpenerTabindex = null;
         if (lightbox) lightbox.setAttribute('aria-hidden', 'true');
         if (lightboxImg) lightboxImg.removeAttribute('src');
-        document.body.style.overflow = '';
+        unlockBodyScroll();
         if (opener) {
-            if (savedTabindex !== undefined && savedTabindex !== null) {
-                opener.setAttribute('tabindex', savedTabindex);
-            } else {
-                opener.removeAttribute('tabindex');
-            }
+            if (savedTabindex != null) opener.setAttribute('tabindex', savedTabindex);
+            else opener.removeAttribute('tabindex');
             opener.focus?.();
         }
     };
@@ -337,15 +374,12 @@
         const openPopup = () => {
             searchPopup.setAttribute('aria-hidden', 'false');
             searchPopup.removeAttribute('inert');
-            document.body.style.overflow = 'hidden';
+            lockBodyScroll();
 
-            const actionMenu = document.querySelector('.action-menu');
-            if (actionMenu?.hasAttribute('open')) {
-                actionMenu.removeAttribute('open');
-            }
+            if (actionMenuEl?.hasAttribute('open')) actionMenuEl.removeAttribute('open');
 
             if (searchPopupInput) {
-                setTimeout(() => searchPopupInput.focus(), 100);
+                setTimeout(() => searchPopupInput.focus({ preventScroll: true }), 100);
             }
         };
 
@@ -382,16 +416,14 @@
 
     if (lightbox && lightboxImg) {
         const openLightbox = (src, opener) => {
+            lockBodyScroll();
             lightboxOpener = opener || null;
             lightboxOpenerTabindex = opener ? opener.getAttribute('tabindex') : null;
             if (opener) opener.setAttribute('tabindex', '-1');
             lightboxImg.src = src;
             lightboxImg.alt = '';
             lightbox.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-            if (lightboxImg.hasAttribute('tabindex')) {
-                requestAnimationFrame(() => lightboxImg.focus());
-            }
+            requestAnimationFrame(() => lightboxImg.focus());
         };
 
         document.addEventListener('click', (event) => {
@@ -410,10 +442,7 @@
 
     const ASIDE_WIDGETS_STORAGE_KEY = 'niwado-aside-widgets-open';
 
-    const getWidgetKey = (el) => {
-        const match = el.className.match(/widget--([a-z0-9_-]+)/i);
-        return match ? match[1] : null;
-    };
+    const getWidgetKey = (el) => el.className.match(/widget--([a-z0-9_-]+)/i)?.[1] ?? null;
 
     const readAsideWidgetsState = () => {
         try {
@@ -424,10 +453,10 @@
         }
     };
 
-    const saveAsideWidgetsState = (asideEl) => {
-        if (!asideEl) return;
+    const saveAsideWidgetsState = (asideContainer) => {
+        if (!asideContainer) return;
         const state = {};
-        asideEl.querySelectorAll('.widget').forEach((details) => {
+        asideContainer.querySelectorAll('.widget').forEach((details) => {
             const key = getWidgetKey(details);
             if (key) state[key] = details.hasAttribute('open');
         });
@@ -436,54 +465,30 @@
         } catch (_) { }
     };
 
-    const aside = document.querySelector('.aside');
-    if (aside) {
+    if (asideEl) {
         const stored = readAsideWidgetsState();
-        aside.querySelectorAll('.widget').forEach((details) => {
+        asideEl.querySelectorAll('.widget').forEach((details) => {
             const key = getWidgetKey(details);
             if (key && stored[key] !== undefined) {
-                if (stored[key]) {
-                    details.setAttribute('open', '');
-                } else {
-                    details.removeAttribute('open');
-                }
+                details.toggleAttribute('open', stored[key]);
             }
-            details.addEventListener('toggle', () => saveAsideWidgetsState(aside));
+            details.addEventListener('toggle', () => saveAsideWidgetsState(asideEl));
         });
     }
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key !== 'Escape') return;
-        if (searchPopup?.getAttribute('aria-hidden') === 'false') {
-            closeSearchPopup();
-            event.preventDefault();
-            return;
-        }
-        if (lightbox?.getAttribute('aria-hidden') === 'false') {
-            closeLightbox();
-            event.preventDefault();
-        }
-    });
 
     (function initProfileActivityTabs() {
         const section = document.querySelector('.profile-activity-tabs');
         const tabPosts = document.getElementById('profile-tab-posts');
         const tabComments = document.getElementById('profile-tab-comments');
         if (!section || !tabPosts || !tabComments) return;
-        function showPosts() {
-            section.classList.remove('profile-activity-tabs--comments');
-            section.classList.add('profile-activity-tabs--posts');
-            tabPosts.setAttribute('aria-selected', 'true');
-            tabComments.setAttribute('aria-selected', 'false');
-        }
-        function showComments() {
-            section.classList.remove('profile-activity-tabs--posts');
-            section.classList.add('profile-activity-tabs--comments');
-            tabPosts.setAttribute('aria-selected', 'false');
-            tabComments.setAttribute('aria-selected', 'true');
-        }
+        const setTab = (posts) => {
+            section.classList.toggle('profile-activity-tabs--posts', posts);
+            section.classList.toggle('profile-activity-tabs--comments', !posts);
+            tabPosts.setAttribute('aria-selected', String(posts));
+            tabComments.setAttribute('aria-selected', String(!posts));
+        };
         section.classList.add('profile-activity-tabs--posts');
-        tabPosts.addEventListener('click', showPosts);
-        tabComments.addEventListener('click', showComments);
+        tabPosts.addEventListener('click', () => setTab(true));
+        tabComments.addEventListener('click', () => setTab(false));
     })();
 })();
