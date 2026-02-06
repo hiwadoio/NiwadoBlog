@@ -133,7 +133,7 @@
         font-size: 0.65625rem;
     }
 
-    .comments-feed-item--reply .comments-feed-replies > .comments-feed-item--reply {
+    .comments-feed-item--reply .comments-feed-replies>.comments-feed-item--reply {
         margin-left: 1.5rem;
     }
 }
@@ -265,7 +265,6 @@
     .card p {
         font-size: 0.6875rem;
         -webkit-line-clamp: 3;
-        line-clamp: 3;
     }
 
     .card-footer {
@@ -330,7 +329,9 @@
         margin-top: 0;
     }
 
+    .widget h3,
     .widget h4,
+    .widget-summary h3,
     .widget-summary h4,
     .widget-summary .widget-summary-title {
         font-size: 0.6875rem;
@@ -427,7 +428,7 @@
         font-size: 0.59375rem;
     }
 
-    .comments-feed-item--reply .comments-feed-replies > .comments-feed-item--reply {
+    .comments-feed-item--reply .comments-feed-replies>.comments-feed-item--reply {
         margin-left: 1rem;
     }
 }
@@ -569,7 +570,6 @@
     .card p {
         font-size: 0.78125rem;
         -webkit-line-clamp: 3;
-        line-clamp: 3;
     }
 
     .card-footer {
@@ -630,7 +630,9 @@
         border-radius: 0;
     }
 
+    .widget h3,
     .widget h4,
+    .widget-summary h3,
     .widget-summary h4,
     .widget-summary .widget-summary-title {
         font-size: 0.75rem;
@@ -727,7 +729,7 @@
         padding: 0.3rem 0.4rem;
     }
 
-    .comments-feed-item--reply .comments-feed-replies > .comments-feed-item--reply {
+    .comments-feed-item--reply .comments-feed-replies>.comments-feed-item--reply {
         margin-left: 1.25rem;
     }
 }
@@ -774,8 +776,8 @@
         right: 0.35rem;
     }
 
-    .comments-feed-item--author > .comment-inner,
-    .comments-feed-item--author > .comment-reply-inner {
+    .comments-feed-item--author>.comment-inner,
+    .comments-feed-item--author>.comment-reply-inner {
         padding: 0.4rem 0.5rem;
         margin: 0 -0.15rem;
     }
@@ -918,7 +920,6 @@
     .card p {
         font-size: 0.84375rem;
         -webkit-line-clamp: 4;
-        line-clamp: 4;
     }
 
     .card-footer {
@@ -1244,7 +1245,6 @@
 
 @media (min-width: 1026px) {
 
-    /* Полоса «наверх» — от 1026px; на 1024–1025 показывается кнопка */
     .scroll-top {
         position: fixed;
         inset-inline-start: 0;
@@ -1313,7 +1313,6 @@
         display: block;
     }
 
-    /* fixed вместо sticky — убирает прыжок при скролле */
     .aside {
         position: fixed;
         top: var(--topbar-height, 4.75rem);
@@ -1324,12 +1323,10 @@
         overflow-x: hidden;
         padding-right: 0.625rem;
         scrollbar-width: thin;
-        scrollbar-gutter: stable;
         scrollbar-color: rgba(107, 114, 128, 0.3) transparent;
     }
 
-    /* Первая колонка (main/profile/любая) — одинаковый отступ до divider на всех страницах */
-    .page > *:first-child {
+    .page>*:first-child {
         margin-right: calc(-0.5 * var(--spacing-lg));
     }
 
@@ -1337,11 +1334,6 @@
         padding-bottom: 4vh;
     }
 
-    /*
-     * Контент с классом .page-col-edge доходит до края колонки (без лишнего отступа до divider).
-     * Добавлять на обёртку контента первой колонки, если у неё есть свой padding справа —
-     * иначе расстояние до divider будет больше, чем на остальных страницах.
-     */
     .page-col-edge {
         padding-right: 0;
     }
@@ -1386,6 +1378,7 @@
     }
 
     .hot-news h3,
+    .aside .widget:first-child h3,
     .aside .widget:first-child h4 {
         margin-top: 0;
         margin-bottom: 0.375rem;
@@ -1421,7 +1414,6 @@
 
 @media (max-width: 1025px) {
 
-    /* На 1024–1025px показываем кнопку «наверх», а не полосу */
     .scroll-top {
         position: fixed;
         inset-inline-end: 1.5rem;

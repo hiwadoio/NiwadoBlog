@@ -61,18 +61,18 @@
         const valueElement = ratingBlock?.querySelector('.rating-value');
         if (!ratingBlock || !valueElement) return;
 
+        const upBtn = ratingBlock.querySelector('.rating-up');
+        const downBtn = ratingBlock.querySelector('.rating-down');
+        const wasUpActive = upBtn?.classList.contains('is-active') ?? false;
+        const wasDownActive = downBtn?.classList.contains('is-active') ?? false;
+
         let currentValue = parseInt(valueElement.textContent, 10) || 0;
         const action = btn.dataset.action;
         const isActive = btn.classList.contains('is-active');
 
-        ratingBlock.querySelectorAll('.rating-btn').forEach(b => {
-            b.classList.remove('is-active');
-        });
+        ratingBlock.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('is-active'));
 
         if (action === 'up') {
-            const downBtn = ratingBlock.querySelector('.rating-down');
-            const wasDownActive = downBtn?.classList.contains('is-active') ?? false;
-
             if (isActive) {
                 currentValue -= 1;
             } else {
@@ -80,9 +80,6 @@
                 btn.classList.add('is-active');
             }
         } else if (action === 'down') {
-            const upBtn = ratingBlock.querySelector('.rating-up');
-            const wasUpActive = upBtn?.classList.contains('is-active') ?? false;
-
             if (isActive) {
                 currentValue += 1;
             } else {
@@ -148,7 +145,7 @@
         list.querySelectorAll('.comments-feed-item').forEach((item) => {
             const valueEl = item.querySelector('.comment-rating-value');
             if (!valueEl) return;
-            const raw = (valueEl.textContent || '').trim().replace(/\u2212/, '-');
+            const raw = (valueEl.textContent || '').trim().replace(/\u2212/g, '-');
             const rating = parseInt(raw, 10);
             if (!Number.isFinite(rating)) return;
             if (rating >= 5 && !item.classList.contains('comments-feed-item--author')) {
@@ -234,62 +231,66 @@
         if (item) item.classList.add('is-revealed');
     });
 
-    document.querySelectorAll('.card-tags-trigger').forEach((trigger) => {
-        const mobile = trigger.closest('.card-tags-mobile');
-        const popup = mobile?.querySelector('.card-tags-popup');
-        const footer = trigger.closest('.card-footer');
-        const tagsSource = footer?.querySelector('.card-footer-tags');
+    document.addEventListener('click', (e) => {
+        const trigger = e.target.closest('.card-tags-trigger');
+        if (trigger) {
+            e.stopPropagation();
+            const mobile = trigger.closest('.card-tags-mobile');
+            const popup = mobile?.querySelector('.card-tags-popup');
+            const footer = trigger.closest('.card-footer');
+            const tagsSource = footer?.querySelector('.card-footer-tags');
+            if (!popup || !tagsSource) return;
 
-        if (!popup || !tagsSource) return;
-
-        const openPopup = () => {
-            document.querySelectorAll('.card-tags-popup').forEach((p) => {
-                p.setAttribute('hidden', '');
-            });
-            document.querySelectorAll('.card-tags-trigger').forEach((t) => {
-                t.setAttribute('aria-expanded', 'false');
-            });
-            popup.innerHTML = '';
-            tagsSource.querySelectorAll('a.tag').forEach((a) => {
-                popup.appendChild(a.cloneNode(true));
-            });
-            popup.removeAttribute('hidden');
-            trigger.setAttribute('aria-expanded', 'true');
-        };
-
-        const closePopup = () => {
-            if (document.activeElement && popup.contains(document.activeElement)) {
-                trigger.focus();
+            if (trigger.getAttribute('aria-expanded') === 'true') {
+                if (document.activeElement && popup.contains(document.activeElement)) trigger.focus();
+                popup.setAttribute('hidden', '');
+                trigger.setAttribute('aria-expanded', 'false');
+            } else {
+                document.querySelectorAll('.card-tags-popup').forEach((p) => p.setAttribute('hidden', ''));
+                document.querySelectorAll('.card-tags-trigger').forEach((t) => t.setAttribute('aria-expanded', 'false'));
+                popup.innerHTML = '';
+                tagsSource.querySelectorAll('a.tag').forEach((a) => popup.appendChild(a.cloneNode(true)));
+                popup.removeAttribute('hidden');
+                trigger.setAttribute('aria-expanded', 'true');
             }
+            return;
+        }
+        const openPopup = document.querySelector('.card-tags-popup:not([hidden])');
+        if (openPopup) {
+            const mobile = openPopup.closest('.card-tags-mobile');
+            if (mobile && !mobile.contains(e.target)) {
+                const t = mobile.querySelector('.card-tags-trigger');
+                if (t) {
+                    if (document.activeElement && openPopup.contains(document.activeElement)) t.focus();
+                    openPopup.setAttribute('hidden', '');
+                    t.setAttribute('aria-expanded', 'false');
+                }
+            }
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const trigger = document.querySelector('.card-tags-trigger[aria-expanded="true"]');
+        if (!trigger) return;
+        const popup = trigger.closest('.card-tags-mobile')?.querySelector('.card-tags-popup');
+        if (popup) {
+            if (document.activeElement && popup.contains(document.activeElement)) trigger.focus();
             popup.setAttribute('hidden', '');
             trigger.setAttribute('aria-expanded', 'false');
-        };
+        }
+    });
 
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (trigger.getAttribute('aria-expanded') === 'true') {
-                closePopup();
-            } else {
-                openPopup();
+    document.addEventListener('click', (e) => {
+        const tagLink = e.target.closest('.card-tags-popup a.tag');
+        if (tagLink) {
+            const popup = tagLink.closest('.card-tags-popup');
+            const trigger = popup?.closest('.card-tags-mobile')?.querySelector('.card-tags-trigger');
+            if (trigger) {
+                popup.setAttribute('hidden', '');
+                trigger.setAttribute('aria-expanded', 'false');
             }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (trigger.getAttribute('aria-expanded') !== 'true') return;
-            if (mobile.contains(e.target)) return;
-            closePopup();
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key !== 'Escape') return;
-            if (trigger.getAttribute('aria-expanded') === 'true') {
-                closePopup();
-            }
-        });
-
-        popup.addEventListener('click', (e) => {
-            if (e.target.closest('a.tag')) closePopup();
-        });
+        }
     });
 
     const searchPopup = document.querySelector('.search-popup');
@@ -297,6 +298,40 @@
     const searchPopupInput = document.querySelector('.search-popup-input');
     const searchPopupOverlay = document.querySelector('.search-popup-overlay');
     const searchPopupForm = document.querySelector('.search-popup-form');
+
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.querySelector('.lightbox-img');
+    const lightboxBackdrop = document.querySelector('.lightbox-backdrop');
+    let lightboxOpener = null;
+    let lightboxOpenerTabindex = null;
+
+    const closeSearchPopup = () => {
+        if (searchPopup) {
+            const searchTrigger = document.querySelector('[data-search-trigger]');
+            if (searchTrigger) searchTrigger.focus();
+            searchPopup.setAttribute('aria-hidden', 'true');
+            searchPopup.setAttribute('inert', '');
+        }
+        document.body.style.overflow = '';
+    };
+
+    const closeLightbox = () => {
+        const opener = lightboxOpener;
+        const savedTabindex = lightboxOpenerTabindex;
+        lightboxOpener = null;
+        lightboxOpenerTabindex = null;
+        if (lightbox) lightbox.setAttribute('aria-hidden', 'true');
+        if (lightboxImg) lightboxImg.removeAttribute('src');
+        document.body.style.overflow = '';
+        if (opener) {
+            if (savedTabindex !== undefined && savedTabindex !== null) {
+                opener.setAttribute('tabindex', savedTabindex);
+            } else {
+                opener.removeAttribute('tabindex');
+            }
+            opener.focus?.();
+        }
+    };
 
     if (searchPopup) {
         const openPopup = () => {
@@ -314,18 +349,6 @@
             }
         };
 
-        const closePopup = () => {
-            const searchTrigger = document.querySelector('[data-search-trigger]');
-            if (searchTrigger) {
-                searchTrigger.focus();
-            }
-            requestAnimationFrame(() => {
-                searchPopup.setAttribute('aria-hidden', 'true');
-                searchPopup.setAttribute('inert', '');
-                document.body.style.overflow = '';
-            });
-        };
-
         document.addEventListener('click', (event) => {
             const searchTrigger = event.target.closest('[data-search-trigger]');
             if (!searchTrigger) return;
@@ -334,16 +357,16 @@
             if (searchPopup.getAttribute('aria-hidden') === 'true') {
                 openPopup();
             } else {
-                closePopup();
+                closeSearchPopup();
             }
         });
 
         if (searchPopupClose) {
-            searchPopupClose.addEventListener('click', closePopup);
+            searchPopupClose.addEventListener('click', closeSearchPopup);
         }
 
         if (searchPopupOverlay) {
-            searchPopupOverlay.addEventListener('click', closePopup);
+            searchPopupOverlay.addEventListener('click', closeSearchPopup);
         }
 
         if (searchPopupForm && searchPopupInput) {
@@ -357,30 +380,18 @@
         }
     }
 
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.querySelector('.lightbox-img');
-    const lightboxBackdrop = document.querySelector('.lightbox-backdrop');
-    let lightboxOpener = null;
-
     if (lightbox && lightboxImg) {
         const openLightbox = (src, opener) => {
             lightboxOpener = opener || null;
+            lightboxOpenerTabindex = opener ? opener.getAttribute('tabindex') : null;
+            if (opener) opener.setAttribute('tabindex', '-1');
             lightboxImg.src = src;
             lightboxImg.alt = '';
             lightbox.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
-            requestAnimationFrame(() => lightboxImg.focus());
-        };
-
-        const closeLightbox = () => {
-            const opener = lightboxOpener;
-            lightboxOpener = null;
-            requestAnimationFrame(() => {
-                lightbox.setAttribute('aria-hidden', 'true');
-                lightboxImg.removeAttribute('src');
-                document.body.style.overflow = '';
-                opener?.focus?.();
-            });
+            if (lightboxImg.hasAttribute('tabindex')) {
+                requestAnimationFrame(() => lightboxImg.focus());
+            }
         };
 
         document.addEventListener('click', (event) => {
@@ -389,7 +400,6 @@
             const img = cardImage.querySelector('img');
             if (!img?.src) return;
             event.preventDefault();
-            cardImage.setAttribute('tabindex', '-1');
             openLightbox(img.src, cardImage);
         });
 
@@ -401,7 +411,7 @@
     const ASIDE_WIDGETS_STORAGE_KEY = 'niwado-aside-widgets-open';
 
     const getWidgetKey = (el) => {
-        const match = el.className.match(/widget--(\S+)/);
+        const match = el.className.match(/widget--([a-z0-9_-]+)/i);
         return match ? match[1] : null;
     };
 
@@ -445,25 +455,35 @@
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
         if (searchPopup?.getAttribute('aria-hidden') === 'false') {
-            document.querySelector('[data-search-trigger]')?.focus();
-            requestAnimationFrame(() => {
-                searchPopup.setAttribute('aria-hidden', 'true');
-                searchPopup.setAttribute('inert', '');
-                document.body.style.overflow = '';
-            });
+            closeSearchPopup();
             event.preventDefault();
             return;
         }
         if (lightbox?.getAttribute('aria-hidden') === 'false') {
-            const opener = lightboxOpener;
-            lightboxOpener = null;
-            requestAnimationFrame(() => {
-                lightbox.setAttribute('aria-hidden', 'true');
-                lightboxImg?.removeAttribute('src');
-                document.body.style.overflow = '';
-                opener?.focus?.();
-            });
+            closeLightbox();
             event.preventDefault();
         }
     });
+
+    (function initProfileActivityTabs() {
+        const section = document.querySelector('.profile-activity-tabs');
+        const tabPosts = document.getElementById('profile-tab-posts');
+        const tabComments = document.getElementById('profile-tab-comments');
+        if (!section || !tabPosts || !tabComments) return;
+        function showPosts() {
+            section.classList.remove('profile-activity-tabs--comments');
+            section.classList.add('profile-activity-tabs--posts');
+            tabPosts.setAttribute('aria-selected', 'true');
+            tabComments.setAttribute('aria-selected', 'false');
+        }
+        function showComments() {
+            section.classList.remove('profile-activity-tabs--posts');
+            section.classList.add('profile-activity-tabs--comments');
+            tabPosts.setAttribute('aria-selected', 'false');
+            tabComments.setAttribute('aria-selected', 'true');
+        }
+        section.classList.add('profile-activity-tabs--posts');
+        tabPosts.addEventListener('click', showPosts);
+        tabComments.addEventListener('click', showComments);
+    })();
 })();
