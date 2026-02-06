@@ -21,6 +21,25 @@
         }
     });
 
+    (function initCommentFormRulesToggle() {
+        const STORAGE_KEY = 'commentFormRulesCollapsed';
+        const block = document.getElementById('comment-hint');
+        const btn = block?.querySelector('[data-comment-rules-toggle]');
+        if (!block || !btn) return;
+        const isCollapsed = localStorage.getItem(STORAGE_KEY) === 'true';
+        if (isCollapsed) {
+            block.classList.add('is-collapsed');
+            btn.setAttribute('aria-expanded', 'false');
+            btn.setAttribute('aria-label', 'Развернуть правила');
+        }
+        btn.addEventListener('click', () => {
+            const collapsed = block.classList.toggle('is-collapsed');
+            localStorage.setItem(STORAGE_KEY, String(collapsed));
+            btn.setAttribute('aria-expanded', String(!collapsed));
+            btn.setAttribute('aria-label', collapsed ? 'Развернуть правила' : 'Свернуть правила');
+        });
+    })();
+
     const scrollTopBtn = document.querySelector('.scroll-top');
     if (scrollTopBtn) {
         scrollTopBtn.addEventListener('click', () => {
@@ -73,6 +92,146 @@
         }
 
         valueElement.textContent = currentValue;
+    });
+
+    document.addEventListener('click', (event) => {
+        const btn = event.target.closest('.comment-reply-btn[data-reply-trigger]');
+        if (!btn) return;
+
+        const actions = btn.closest('.comment-actions');
+        const commentBody = btn.closest('.comment-body');
+        if (!actions || !commentBody) return;
+
+        const template = document.getElementById('comment-reply-form-template');
+        if (!template || !template.content) return;
+
+        const existing = commentBody.querySelector('.comment-reply-form');
+        if (existing) {
+            existing.remove();
+            return;
+        }
+
+        const clone = template.content.cloneNode(true);
+        const row = btn.closest('.comment-actions-row');
+        (row || actions).after(clone);
+    });
+
+    document.addEventListener('click', (event) => {
+        const btn = event.target.closest('.comment-toggle-btn[data-comment-toggle]');
+        if (!btn) return;
+        const item = btn.closest('.comments-feed-item');
+        const wrap = btn.closest('.comment-toggle-wrap');
+        const tooltip = wrap?.querySelector('.comment-toggle-tooltip');
+        if (!item) return;
+        item.classList.toggle('is-collapsed');
+        const label = item.classList.contains('is-collapsed') ? 'Развернуть комментарий' : 'Свернуть комментарий';
+        btn.setAttribute('aria-label', label);
+        if (tooltip) tooltip.textContent = label;
+    });
+
+    document.addEventListener('click', (event) => {
+        const btn = event.target.closest('.comment-branch-toggle-btn[data-branch-toggle]');
+        if (!btn) return;
+        const item = btn.closest('.comments-feed-item');
+        const wrap = btn.closest('.comment-toggle-wrap');
+        const tooltip = wrap?.querySelector('.comment-toggle-tooltip');
+        if (!item) return;
+        item.classList.toggle('is-branch-collapsed');
+        const label = item.classList.contains('is-branch-collapsed') ? 'Развернуть ветку' : 'Свернуть ветку';
+        btn.setAttribute('aria-label', label);
+        if (tooltip) tooltip.textContent = label;
+    });
+
+    (function initCommentRatingStyles() {
+        const list = document.querySelector('.comments-feed-list');
+        if (!list) return;
+        list.querySelectorAll('.comments-feed-item').forEach((item) => {
+            const valueEl = item.querySelector('.comment-rating-value');
+            if (!valueEl) return;
+            const raw = (valueEl.textContent || '').trim().replace(/\u2212/, '-');
+            const rating = parseInt(raw, 10);
+            if (!Number.isFinite(rating)) return;
+            if (rating >= 5 && !item.classList.contains('comments-feed-item--author')) {
+                item.classList.add('comments-feed-item--high-rating');
+                const meta = item.querySelector('.comments-feed-meta');
+                if (meta && !meta.querySelector('.comment-high-rating-icon')) {
+                    const authorLink = meta.querySelector('.comment-author-link');
+                    const wrap = document.createElement('span');
+                    wrap.className = 'comment-high-rating-wrap';
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'comment-high-rating-tooltip';
+                    tooltip.setAttribute('aria-hidden', 'true');
+                    tooltip.textContent = 'Полезный комментарий';
+                    const iconWrap = document.createElement('span');
+                    iconWrap.className = 'comment-high-rating-icon';
+                    iconWrap.setAttribute('aria-hidden', 'true');
+                    iconWrap.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24"><use href="#icon-thumb-up"/></svg>';
+                    wrap.appendChild(tooltip);
+                    wrap.appendChild(iconWrap);
+                    meta.insertBefore(wrap, authorLink ? authorLink.nextSibling : meta.firstChild);
+                }
+            }
+            if (rating <= -3) {
+                item.classList.add('comments-feed-item--low-rating');
+                let wrapper = item.querySelector('.comments-feed-text-wrapper');
+                if (!wrapper) {
+                    const textEl = item.querySelector('.comments-feed-text');
+                    if (textEl) {
+                        wrapper = document.createElement('div');
+                        wrapper.className = 'comments-feed-text-wrapper';
+                        const veil = document.createElement('span');
+                        veil.className = 'comment-text-veil';
+                        veil.setAttribute('role', 'button');
+                        veil.setAttribute('tabindex', '0');
+                        veil.setAttribute('aria-label', 'Показать комментарий');
+                        const icon = document.createElement('span');
+                        icon.className = 'icon icon--sm comment-text-veil-icon';
+                        icon.setAttribute('aria-hidden', 'true');
+                        icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-eye"/></svg>';
+                        veil.appendChild(icon);
+                        textEl.parentNode.insertBefore(wrapper, textEl);
+                        wrapper.appendChild(veil);
+                        wrapper.appendChild(textEl);
+                    }
+                }
+            }
+        });
+    })();
+
+    document.addEventListener('click', (event) => {
+        const option = event.target.closest('.comments-feed-sort-option');
+        if (option) {
+            event.preventDefault();
+            const dropdown = option.closest('.comments-feed-sort-dropdown');
+            const triggerText = dropdown?.querySelector('.comments-feed-sort-trigger-text');
+            if (triggerText) {
+                triggerText.textContent = option.textContent.trim();
+                dropdown.querySelectorAll('.comments-feed-sort-option').forEach((o) => o.classList.remove('is-active'));
+                option.classList.add('is-active');
+                dropdown?.removeAttribute('open');
+            }
+            return;
+        }
+        const openDropdown = document.querySelector('.comments-feed-sort-dropdown[open]');
+        if (openDropdown && !openDropdown.contains(event.target)) {
+            openDropdown.removeAttribute('open');
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        const veil = event.target.closest('.comment-text-veil');
+        if (!veil) return;
+        const item = veil.closest('.comments-feed-item');
+        if (item) item.classList.add('is-revealed');
+    });
+
+    document.addEventListener('keydown', (event) => {
+        const veil = event.target.closest('.comment-text-veil');
+        if (!veil) return;
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        const item = veil.closest('.comments-feed-item');
+        if (item) item.classList.add('is-revealed');
     });
 
     document.querySelectorAll('.card-tags-trigger').forEach((trigger) => {
@@ -284,8 +443,7 @@
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
         if (searchPopup?.getAttribute('aria-hidden') === 'false') {
-            const firstSearchTrigger = document.querySelector('[data-search-trigger]');
-            if (firstSearchTrigger) firstSearchTrigger.focus();
+            document.querySelector('[data-search-trigger]')?.focus();
             requestAnimationFrame(() => {
                 searchPopup.setAttribute('aria-hidden', 'true');
                 searchPopup.setAttribute('inert', '');
@@ -299,7 +457,7 @@
             lightboxOpener = null;
             requestAnimationFrame(() => {
                 lightbox.setAttribute('aria-hidden', 'true');
-                if (lightboxImg) lightboxImg.removeAttribute('src');
+                lightboxImg?.removeAttribute('src');
                 document.body.style.overflow = '';
             });
             event.preventDefault();
