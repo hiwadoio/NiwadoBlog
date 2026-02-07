@@ -34,7 +34,7 @@ NiwadoBlog/
 ├── index.html          # Главная страница (лента новостей)
 ├── fullnews.html       # Страница полной новости (статья + комментарии)
 ├── README.md
-├── fonts/              # Шрифты (Inter, Outfit, Raleway) в .woff2
+├── fonts/              # Шрифт Inter (woff2, локально)
 ├── icons/
 │   └── icons.svg       # Внешний спрайт иконок (дополнительно)
 ├── images/
@@ -58,7 +58,7 @@ NiwadoBlog/
 | Разметка | HTML5, семантика, Schema.org (NewsArticle на странице статьи) |
 | Стили | CSS3, переменные, Grid/Flexbox, медиазапросы |
 | Скрипты | Vanilla JavaScript (ES6+), без фреймворков |
-| Шрифты | Inter, Outfit, Raleway (woff2, `font-display: swap`) |
+| Шрифты | Inter (woff2, локально, `font-display: swap`) |
 
 Сборка не требуется: достаточно раздавать файлы через любой веб-сервер или открывать `index.html` локально.
 

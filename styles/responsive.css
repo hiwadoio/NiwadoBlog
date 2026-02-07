@@ -48,14 +48,14 @@
     }
 
     .card--full .card-title {
-        font-size: 1.125rem;
+        font-size: 1.25rem;
         margin-bottom: 0.5rem;
     }
 
     .card--full .article-body,
     .card--full .article-body-lead {
-        font-size: 0.84375rem;
-        line-height: 1.7;
+        font-size: 1rem;
+        line-height: 1.5;
     }
 
     .card--full .article-body p,
@@ -66,7 +66,7 @@
     .card--full .article-body-quote {
         margin: 1rem 0;
         padding: 0.65rem 0.85rem 0.65rem 1rem;
-        font-size: 0.84375rem;
+        font-size: 1rem;
     }
 
     .card--full .card-image {
@@ -397,17 +397,17 @@
     }
 
     .card--full .card-title {
-        font-size: 0.9375rem;
+        font-size: 1.125rem;
     }
 
     .card--full .article-body,
     .card--full .article-body-lead {
-        font-size: 0.75rem;
+        font-size: 1rem;
     }
 
     .card--full .article-body-quote {
         padding: 0.45rem 0.55rem 0.45rem 0.7rem;
-        font-size: 0.75rem;
+        font-size: 1rem;
     }
 
     .card--full .card-image {
@@ -698,12 +698,12 @@
     }
 
     .card--full .card-title {
-        font-size: 1.0625rem;
+        font-size: 1.25rem;
     }
 
     .card--full .article-body,
     .card--full .article-body-lead {
-        font-size: 0.8125rem;
+        font-size: 1rem;
     }
 
     .card--full .article-body-quote {
@@ -760,12 +760,12 @@
     }
 
     .card--full .card-title {
-        font-size: 1rem;
+        font-size: 1.125rem;
     }
 
     .card--full .article-body,
     .card--full .article-body-lead {
-        font-size: 0.78125rem;
+        font-size: 1rem;
     }
 
     .card--full .card-image {

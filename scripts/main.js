@@ -4,16 +4,16 @@
     const throttleRAF = (fn) => {
         let rafId = null;
         return (...args) => {
-            if (rafId === null) {
-                rafId = requestAnimationFrame(() => {
-                    fn(...args);
-                    rafId = null;
-                });
-            }
+            if (rafId !== null) return;
+            rafId = requestAnimationFrame(() => {
+                fn(...args);
+                rafId = null;
+            });
         };
     };
 
     let bodyScrollLockY = null;
+    let bodyScrollLockCount = 0;
     const topbarEl = document.querySelector('.topbar');
     const asideEl = document.querySelector('.aside');
 
@@ -32,7 +32,8 @@
     const getScrollbarWidth = () => Math.round(window.innerWidth - document.documentElement.clientWidth);
 
     const lockBodyScroll = () => {
-        if (bodyScrollLockY !== null) return;
+        bodyScrollLockCount += 1;
+        if (bodyScrollLockCount > 1) return;
         bodyScrollLockY = Math.round(window.scrollY);
         const wrap = document.querySelector('.main-scroll-wrap');
         if (wrap && topbarEl) {
@@ -47,21 +48,25 @@
             }
             wrap.style.cssText = `position:fixed;top:${top}px;left:0;right:0;width:100%;bottom:0;overflow:hidden;z-index:100;box-sizing:border-box${sb > 0 ? `;padding-right:${sb}px` : ''}`;
         } else {
+            document.body.classList.add('scroll-lock');
             Object.assign(document.body.style, {
                 position: 'fixed', top: `-${bodyScrollLockY}px`, left: '0', right: '0', width: '100%', overflow: 'hidden'
             });
         }
     };
 
+    const BODY_STYLE_KEYS = ['minHeight', 'paddingRight', 'overflow', 'position', 'top', 'left', 'right', 'width'];
     const unlockBodyScroll = () => {
-        if (bodyScrollLockY === null) return;
+        if (bodyScrollLockCount === 0) return;
+        bodyScrollLockCount -= 1;
+        if (bodyScrollLockCount > 0) return;
         const y = bodyScrollLockY;
         bodyScrollLockY = null;
         document.body.classList.remove('scroll-lock');
         document.documentElement.style.overflow = '';
         const wrap = document.querySelector('.main-scroll-wrap');
         if (wrap) wrap.style.cssText = '';
-        ['minHeight', 'paddingRight', 'overflow', 'position', 'top', 'left', 'right', 'width'].forEach((k) => { document.body.style[k] = ''; });
+        for (const k of BODY_STYLE_KEYS) document.body.style[k] = '';
         if (topbarEl) topbarEl.style.paddingRight = '';
         if (asideEl) asideEl.style.transform = '';
         const prev = document.documentElement.style.scrollBehavior;
@@ -71,28 +76,27 @@
     };
 
     const actionMenuEl = document.querySelector('.action-menu');
-    document.addEventListener('click', (event) => {
-        if (actionMenuEl?.hasAttribute('open') && !actionMenuEl.contains(event.target)) {
+    document.addEventListener('click', (e) => {
+        if (actionMenuEl?.hasAttribute('open') && !actionMenuEl.contains(e.target)) {
             actionMenuEl.removeAttribute('open');
         }
     });
 
     (function initCommentFormRulesToggle() {
-        const STORAGE_KEY = 'commentFormRulesCollapsed';
+        const KEY = 'commentFormRulesCollapsed';
         const block = document.getElementById('comment-hint');
         const btn = block?.querySelector('[data-comment-rules-toggle]');
         if (!block || !btn) return;
-        const isCollapsed = localStorage.getItem(STORAGE_KEY) === 'true';
-        if (isCollapsed) {
-            block.classList.add('is-collapsed');
-            btn.setAttribute('aria-expanded', 'false');
-            btn.setAttribute('aria-label', 'Развернуть правила');
-        }
+        const label = (c) => (c ? 'Развернуть правила' : 'Свернуть правила');
+        const isCollapsed = localStorage.getItem(KEY) === 'true';
+        block.classList.toggle('is-collapsed', isCollapsed);
+        btn.setAttribute('aria-expanded', String(!isCollapsed));
+        btn.setAttribute('aria-label', label(isCollapsed));
         btn.addEventListener('click', () => {
             const collapsed = block.classList.toggle('is-collapsed');
-            localStorage.setItem(STORAGE_KEY, String(collapsed));
+            localStorage.setItem(KEY, String(collapsed));
             btn.setAttribute('aria-expanded', String(!collapsed));
-            btn.setAttribute('aria-label', collapsed ? 'Развернуть правила' : 'Свернуть правила');
+            btn.setAttribute('aria-label', label(collapsed));
         });
     })();
 
@@ -109,46 +113,30 @@
         window.addEventListener('scroll', handleScroll, { passive: true });
     }
 
-    document.addEventListener('click', (event) => {
-        const btn = event.target.closest('.rating-btn');
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.rating-btn');
         if (!btn) return;
 
         const ratingBlock = btn.closest('.card-rating');
         const valueElement = ratingBlock?.querySelector('.rating-value');
         if (!ratingBlock || !valueElement) return;
 
-        const upBtn = ratingBlock.querySelector('.rating-up');
-        const downBtn = ratingBlock.querySelector('.rating-down');
-        const wasUpActive = upBtn?.classList.contains('is-active') ?? false;
-        const wasDownActive = downBtn?.classList.contains('is-active') ?? false;
+        const wasUpActive = ratingBlock.querySelector('.rating-up')?.classList.contains('is-active') ?? false;
+        const wasDownActive = ratingBlock.querySelector('.rating-down')?.classList.contains('is-active') ?? false;
 
         let currentValue = parseInt(valueElement.textContent, 10) || 0;
         const action = btn.dataset.action;
         const isActive = btn.classList.contains('is-active');
 
         ratingBlock.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('is-active'));
-
-        if (action === 'up') {
-            if (isActive) {
-                currentValue -= 1;
-            } else {
-                currentValue += wasDownActive ? 2 : 1;
-                btn.classList.add('is-active');
-            }
-        } else if (action === 'down') {
-            if (isActive) {
-                currentValue += 1;
-            } else {
-                currentValue -= wasUpActive ? 2 : 1;
-                btn.classList.add('is-active');
-            }
-        }
-
+        const delta = action === 'up' ? (isActive ? -1 : (wasDownActive ? 2 : 1)) : (isActive ? 1 : -(wasUpActive ? 2 : 1));
+        currentValue += delta;
+        if (!isActive) btn.classList.add('is-active');
         valueElement.textContent = currentValue;
     });
 
-    document.addEventListener('click', (event) => {
-        const btn = event.target.closest('.comment-reply-btn[data-reply-trigger]');
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.comment-reply-btn[data-reply-trigger]');
         if (!btn) return;
 
         const actions = btn.closest('.comment-actions');
@@ -168,82 +156,88 @@
         (btn.closest('.comment-actions-row') || actions).after(clone);
     });
 
-    document.addEventListener('click', (event) => {
-        const btn = event.target.closest('.comment-toggle-btn[data-comment-toggle], .comment-branch-toggle-btn[data-branch-toggle]');
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.comment-toggle-btn[data-comment-toggle], .comment-branch-toggle-btn[data-branch-toggle]');
         if (!btn) return;
         const item = btn.closest('.comments-feed-item');
-        const wrap = btn.closest('.comment-toggle-wrap');
         if (!item) return;
         const isBranch = btn.matches('[data-branch-toggle]');
-        const collapsedClass = isBranch ? 'is-branch-collapsed' : 'is-collapsed';
-        const labels = isBranch ? ['Развернуть ветку', 'Свернуть ветку'] : ['Развернуть комментарий', 'Свернуть комментарий'];
-        item.classList.toggle(collapsedClass);
-        const label = item.classList.contains(collapsedClass) ? labels[0] : labels[1];
+        const cls = isBranch ? 'is-branch-collapsed' : 'is-collapsed';
+        const [openL, closeL] = isBranch ? ['Развернуть ветку', 'Свернуть ветку'] : ['Развернуть комментарий', 'Свернуть комментарий'];
+        item.classList.toggle(cls);
+        const label = item.classList.contains(cls) ? openL : closeL;
         btn.setAttribute('aria-label', label);
-        const tooltip = wrap?.querySelector('.comment-toggle-tooltip');
-        if (tooltip) tooltip.textContent = label;
+        const tip = btn.closest('.comment-toggle-wrap')?.querySelector('.comment-toggle-tooltip');
+        if (tip) tip.textContent = label;
     });
 
     (function initCommentRatingStyles() {
         const list = document.querySelector('.comments-feed-list');
         if (!list) return;
+
+        const createHighRatingBadge = () => {
+            const wrap = document.createElement('span');
+            wrap.className = 'comment-high-rating-wrap';
+            const tooltip = document.createElement('span');
+            tooltip.className = 'comment-high-rating-tooltip';
+            tooltip.setAttribute('aria-hidden', 'true');
+            tooltip.textContent = 'Полезный комментарий';
+            const iconWrap = document.createElement('span');
+            iconWrap.className = 'comment-high-rating-icon';
+            iconWrap.setAttribute('aria-hidden', 'true');
+            iconWrap.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24"><use href="#icon-thumb-up"/></svg>';
+            wrap.append(tooltip, iconWrap);
+            return wrap;
+        };
+
+        const wrapWithLowRatingVeil = (textEl) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'comments-feed-text-wrapper';
+            const veil = document.createElement('span');
+            veil.className = 'comment-text-veil';
+            veil.setAttribute('role', 'button');
+            veil.setAttribute('tabindex', '0');
+            veil.setAttribute('aria-label', 'Показать комментарий');
+            const icon = document.createElement('span');
+            icon.className = 'icon icon--sm comment-text-veil-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-eye"/></svg>';
+            veil.appendChild(icon);
+            textEl.parentNode.insertBefore(wrapper, textEl);
+            wrapper.append(veil, textEl);
+            return wrapper;
+        };
+
         list.querySelectorAll('.comments-feed-item').forEach((item) => {
             const valueEl = item.querySelector('.comment-rating-value');
             if (!valueEl) return;
             const raw = (valueEl.textContent || '').trim().replace(/\u2212/g, '-');
             const rating = parseInt(raw, 10);
             if (!Number.isFinite(rating)) return;
+
             if (rating >= 5 && !item.classList.contains('comments-feed-item--author')) {
                 item.classList.add('comments-feed-item--high-rating');
                 const meta = item.querySelector('.comments-feed-meta');
+                const authorLink = meta?.querySelector('.comment-author-link');
                 if (meta && !meta.querySelector('.comment-high-rating-icon')) {
-                    const authorLink = meta.querySelector('.comment-author-link');
-                    const wrap = document.createElement('span');
-                    wrap.className = 'comment-high-rating-wrap';
-                    const tooltip = document.createElement('span');
-                    tooltip.className = 'comment-high-rating-tooltip';
-                    tooltip.setAttribute('aria-hidden', 'true');
-                    tooltip.textContent = 'Полезный комментарий';
-                    const iconWrap = document.createElement('span');
-                    iconWrap.className = 'comment-high-rating-icon';
-                    iconWrap.setAttribute('aria-hidden', 'true');
-                    iconWrap.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24"><use href="#icon-thumb-up"/></svg>';
-                    wrap.appendChild(tooltip);
-                    wrap.appendChild(iconWrap);
-                    meta.insertBefore(wrap, authorLink ? authorLink.nextSibling : meta.firstChild);
+                    meta.insertBefore(createHighRatingBadge(), authorLink?.nextSibling ?? meta.firstChild);
                 }
             }
+
             if (rating <= -3) {
                 item.classList.add('comments-feed-item--low-rating');
-                let wrapper = item.querySelector('.comments-feed-text-wrapper');
-                if (!wrapper) {
+                if (!item.querySelector('.comments-feed-text-wrapper')) {
                     const textEl = item.querySelector('.comments-feed-text');
-                    if (textEl) {
-                        wrapper = document.createElement('div');
-                        wrapper.className = 'comments-feed-text-wrapper';
-                        const veil = document.createElement('span');
-                        veil.className = 'comment-text-veil';
-                        veil.setAttribute('role', 'button');
-                        veil.setAttribute('tabindex', '0');
-                        veil.setAttribute('aria-label', 'Показать комментарий');
-                        const icon = document.createElement('span');
-                        icon.className = 'icon icon--sm comment-text-veil-icon';
-                        icon.setAttribute('aria-hidden', 'true');
-                        icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-eye"/></svg>';
-                        veil.appendChild(icon);
-                        textEl.parentNode.insertBefore(wrapper, textEl);
-                        wrapper.appendChild(veil);
-                        wrapper.appendChild(textEl);
-                    }
+                    if (textEl) wrapWithLowRatingVeil(textEl);
                 }
             }
         });
     })();
 
-    document.addEventListener('click', (event) => {
-        const option = event.target.closest('.comments-feed-sort-option');
+    document.addEventListener('click', (e) => {
+        const option = e.target.closest('.comments-feed-sort-option');
         if (option) {
-            event.preventDefault();
+            e.preventDefault();
             const dropdown = option.closest('.comments-feed-sort-dropdown');
             const triggerText = dropdown?.querySelector('.comments-feed-sort-trigger-text');
             if (!dropdown || !triggerText) return;
@@ -254,7 +248,7 @@
             return;
         }
         const openDropdown = document.querySelector('.comments-feed-sort-dropdown[open]');
-        if (openDropdown && !openDropdown.contains(event.target)) openDropdown.removeAttribute('open');
+        if (openDropdown && !openDropdown.contains(e.target)) openDropdown.removeAttribute('open');
     });
 
     const revealVeil = (target) => {
@@ -300,7 +294,7 @@
         if (openPopup) {
             const mobile = openPopup.closest('.card-tags-mobile');
             const t = mobile?.querySelector('.card-tags-trigger');
-            if (t && mobile && !mobile.contains(e.target)) closeCardTagsPopup(openPopup, t);
+            if (t && !mobile?.contains(e.target)) closeCardTagsPopup(openPopup, t);
         }
     });
 
@@ -372,9 +366,9 @@
 
     if (searchPopup) {
         const openPopup = () => {
+            lockBodyScroll();
             searchPopup.setAttribute('aria-hidden', 'false');
             searchPopup.removeAttribute('inert');
-            lockBodyScroll();
 
             if (actionMenuEl?.hasAttribute('open')) actionMenuEl.removeAttribute('open');
 
@@ -383,33 +377,20 @@
             }
         };
 
-        document.addEventListener('click', (event) => {
-            const searchTrigger = event.target.closest('[data-search-trigger]');
+        document.addEventListener('click', (e) => {
+            const searchTrigger = e.target.closest('[data-search-trigger]');
             if (!searchTrigger) return;
-
-            event.preventDefault();
-            if (searchPopup.getAttribute('aria-hidden') === 'true') {
-                openPopup();
-            } else {
-                closeSearchPopup();
-            }
+            e.preventDefault();
+            (searchPopup.getAttribute('aria-hidden') === 'true' ? openPopup : closeSearchPopup)();
         });
 
-        if (searchPopupClose) {
-            searchPopupClose.addEventListener('click', closeSearchPopup);
-        }
-
-        if (searchPopupOverlay) {
-            searchPopupOverlay.addEventListener('click', closeSearchPopup);
-        }
+        [searchPopupClose, searchPopupOverlay].forEach((el) => el?.addEventListener('click', closeSearchPopup));
 
         if (searchPopupForm && searchPopupInput) {
-            searchPopupForm.addEventListener('submit', (event) => {
-                event.preventDefault();
+            searchPopupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
                 const query = searchPopupInput.value.trim();
-                if (query) {
-                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
-                }
+                if (query) window.location.href = `/search?q=${encodeURIComponent(query)}`;
             });
         }
     }
@@ -426,12 +407,12 @@
             requestAnimationFrame(() => lightboxImg.focus());
         };
 
-        document.addEventListener('click', (event) => {
-            const cardImage = event.target.closest('.card-image');
+        document.addEventListener('click', (e) => {
+            const cardImage = e.target.closest('.card-image');
             if (!cardImage) return;
             const img = cardImage.querySelector('img');
             if (!img?.src) return;
-            event.preventDefault();
+            e.preventDefault();
             openLightbox(img.src, cardImage);
         });
 
@@ -446,8 +427,7 @@
 
     const readAsideWidgetsState = () => {
         try {
-            const raw = localStorage.getItem(ASIDE_WIDGETS_STORAGE_KEY);
-            return raw ? JSON.parse(raw) : {};
+            return JSON.parse(localStorage.getItem(ASIDE_WIDGETS_STORAGE_KEY) || '{}');
         } catch {
             return {};
         }
