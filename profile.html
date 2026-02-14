@@ -97,6 +97,21 @@
                 <path
                     d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
             </symbol>
+            <symbol id="icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2H2v10l9.29 9.29a2 2 0 0 0 2.82 0l6.42-6.42a2 2 0 0 0 0-2.82L12 2Z" />
+                <path d="M7 7h.01" />
+            </symbol>
+            <symbol id="icon-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </symbol>
+            <symbol id="icon-author" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                <path d="m9 12 2 2 4-4" />
+            </symbol>
             <symbol id="icon-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
@@ -136,7 +151,7 @@
                 </a>
                 <span class="brand-sep" aria-hidden="true"></span>
                 <span class="brand-slogan-wrap">
-                    <span class="brand-slogan-tooltip" aria-hidden="true">Мой скромный, творческий уголок</span>
+                    <span class="brand-slogan-tooltip" aria-hidden="true">Творческий уголок Hiwado Kota</span>
                     <span class="brand-slogan">ひわど こうた</span>
                 </span>
             </div>
@@ -237,6 +252,85 @@
     </div>
 
     <main class="page">
+        <aside class="aside-left narrow" aria-label="Разделы и навигация">
+            <ul class="aside-left-menu widget-menu">
+                <li><a href="/category/digital"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-tag" />
+                            </svg></span>Digital<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Digital</span></a></li>
+                <li><a href="/category/llm"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-flame" />
+                            </svg></span>LLM<span class="aside-left-category-tooltip" aria-hidden="true">LLM</span></a>
+                </li>
+                <li><a href="/category/ml"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-tag" />
+                            </svg></span>Машинное обучение<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Машинное обучение</span></a></li>
+                <li><a href="/category/science"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-clock" />
+                            </svg></span>Наука<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Наука</span></a></li>
+                <li><a href="/category/education"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-bookmark" />
+                            </svg></span>Обучение<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Обучение</span></a></li>
+                <li><a href="/category/hardware"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-briefcase" />
+                            </svg></span>Железо<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Железо</span></a></li>
+                <li><a href="/category/people"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-user" />
+                            </svg></span>Люди<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Люди</span></a></li>
+                <li><a href="/category/finance"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-mail" />
+                            </svg></span>Финансы<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Финансы</span></a></li>
+                <li><a href="/category/security"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-eye" />
+                            </svg></span>Безопасность<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Безопасность</span></a></li>
+                <li><a href="/category/politics"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-comment" />
+                            </svg></span>Политика<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Политика</span></a></li>
+                <li><a href="/category/creativity"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-author" />
+                            </svg></span>Творчество<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Творчество</span></a></li>
+                <li><a href="/category/dev"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-newspaper" />
+                            </svg></span>Разработка<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Разработка</span></a></li>
+                <li><a href="/category/health"><span class="aside-left-menu-icon" aria-hidden="true"><svg width="20"
+                                height="20" viewBox="0 0 24 24">
+                                <use href="#icon-thumb-up" />
+                            </svg></span>Здоровье<span class="aside-left-category-tooltip"
+                            aria-hidden="true">Здоровье</span></a></li>
+            </ul>
+            <footer class="aside-left-footer">
+                <a href="/about" class="aside-left-link">О проекте</a>
+                <a href="/rules" class="aside-left-link">Правила</a>
+                <a href="/contacts" class="aside-left-link">Контакты</a>
+                <a href="/privacy" class="aside-left-link">Политика конфиденциальности</a>
+                <p class="aside-footer-copy">
+                    <span class="copy-name">HIWADO SERVICES</span>
+                    <span class="copy-desc">Мой творческий уголок</span>
+                </p>
+            </footer>
+        </aside>
         <section class="profile-main" aria-label="Профиль пользователя">
             <h1 class="visually-hidden">Профиль пользователя</h1>
             <div class="profile-wrapper">
@@ -836,19 +930,6 @@
                     </ul>
                 </div>
             </details>
-
-            <footer class="aside-footer">
-                <nav aria-label="Дополнительная навигация">
-                    <a href="/about" class="aside-footer-link">О проекте</a>
-                    <a href="/rules" class="aside-footer-link">Правила</a>
-                    <a href="/advertising" class="aside-footer-link">Реклама</a>
-                    <a href="/help" class="aside-footer-link">Помощь</a>
-                </nav>
-                <p class="aside-footer-copy">
-                    <span class="copy-name">HIWADO SERVICES<span class="copy-year"> © 2026</span></span>
-                    <span class="copy-desc">Мой скромный, творческий уголок</span>
-                </p>
-            </footer>
         </aside>
     </main>
 

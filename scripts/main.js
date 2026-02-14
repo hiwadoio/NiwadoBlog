@@ -1,6 +1,9 @@
 (() => {
     'use strict';
 
+    // Утилиты
+    const $ = (sel, ctx = document) => ctx.querySelector(sel);
+    const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
     const throttleRAF = (fn) => {
         let rafId = null;
         return (...args) => {
@@ -12,12 +15,15 @@
         };
     };
 
-    let bodyScrollLockY = null;
-    let bodyScrollLockCount = 0;
-    const topbarEl = document.querySelector('.topbar');
-    const asideEl = document.querySelector('.aside');
+    // Элементы
+    const topbarEl = $('.topbar');
+    const asideEl = $('.aside');
+    const asideLeftEl = $('.aside-left');
+    const pageEl = $('.page');
+    const actionMenuEl = $('.action-menu');
 
-    if (topbarEl && !document.querySelector('.main-scroll-wrap')) {
+    // Создание обёртки для контента
+    if (topbarEl && !$('.main-scroll-wrap')) {
         const wrap = document.createElement('div');
         wrap.className = 'main-scroll-wrap';
         let el = topbarEl.nextElementSibling;
@@ -29,240 +35,302 @@
         topbarEl.after(wrap);
     }
 
+    // Блокировка скролла
+    let scrollLockCount = 0;
+    let savedScrollY = 0;
     const getScrollbarWidth = () => Math.round(window.innerWidth - document.documentElement.clientWidth);
 
-    const lockBodyScroll = () => {
-        bodyScrollLockCount += 1;
-        if (bodyScrollLockCount > 1) return;
-        bodyScrollLockY = Math.round(window.scrollY);
-        const wrap = document.querySelector('.main-scroll-wrap');
-        if (wrap && topbarEl) {
-            const top = Math.round(topbarEl.offsetHeight - bodyScrollLockY);
-            const sb = getScrollbarWidth();
-            document.body.style.minHeight = `${document.documentElement.scrollHeight}px`;
-            document.body.style.overflow = document.documentElement.style.overflow = 'hidden';
-            document.body.classList.add('scroll-lock');
-            if (sb > 0) {
-                document.body.style.paddingRight = topbarEl.style.paddingRight = `${sb}px`;
-                if (asideEl) asideEl.style.transform = `translateX(-${sb}px)`;
-            }
-            wrap.style.cssText = `position:fixed;top:${top}px;left:0;right:0;width:100%;bottom:0;overflow:hidden;z-index:100;box-sizing:border-box${sb > 0 ? `;padding-right:${sb}px` : ''}`;
-        } else {
-            document.body.classList.add('scroll-lock');
-            Object.assign(document.body.style, {
-                position: 'fixed', top: `-${bodyScrollLockY}px`, left: '0', right: '0', width: '100%', overflow: 'hidden'
-            });
-        }
+    const lockScroll = () => {
+        if (++scrollLockCount > 1) return;
+        const scrollY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
+        savedScrollY = scrollY;
+        const sb = getScrollbarWidth();
+        const topbarH = topbarEl?.offsetHeight || 0;
+
+        if (pageEl && topbarH > 0) pageEl.style.paddingTop = `${topbarH}px`;
+        if (topbarEl && sb > 0) topbarEl.style.paddingRight = `${sb}px`;
+        if (asideEl && sb > 0) asideEl.style.transform = `translateX(-${sb}px)`;
+
+        const bodyStyle = document.body.style;
+        bodyStyle.cssText = `position:fixed;top:-${scrollY}px;left:0;right:0;width:100%;overflow:hidden;${sb > 0 ? `padding-right:${sb}px;` : ''}`;
+        document.documentElement.style.overflow = 'hidden';
+        document.body.classList.add('scroll-lock');
+        document.documentElement.classList.add('scroll-lock');
     };
 
-    const BODY_STYLE_KEYS = ['minHeight', 'paddingRight', 'overflow', 'position', 'top', 'left', 'right', 'width'];
-    const unlockBodyScroll = () => {
-        if (bodyScrollLockCount === 0) return;
-        bodyScrollLockCount -= 1;
-        if (bodyScrollLockCount > 0) return;
-        const y = bodyScrollLockY;
-        bodyScrollLockY = null;
+    const unlockScroll = () => {
+        if (scrollLockCount === 0 || --scrollLockCount > 0) return;
         document.body.classList.remove('scroll-lock');
+        document.documentElement.classList.remove('scroll-lock');
+        document.body.style.cssText = '';
         document.documentElement.style.overflow = '';
-        const wrap = document.querySelector('.main-scroll-wrap');
-        if (wrap) wrap.style.cssText = '';
-        for (const k of BODY_STYLE_KEYS) document.body.style[k] = '';
         if (topbarEl) topbarEl.style.paddingRight = '';
+        if (pageEl) pageEl.style.paddingTop = '';
         if (asideEl) asideEl.style.transform = '';
-        const prev = document.documentElement.style.scrollBehavior;
+
+        const prevBehavior = document.documentElement.style.scrollBehavior;
         document.documentElement.style.scrollBehavior = 'auto';
-        window.scrollTo(0, y);
-        document.documentElement.style.scrollBehavior = prev;
+        window.scrollTo(0, savedScrollY);
+        document.documentElement.style.scrollBehavior = prevBehavior;
+        savedScrollY = 0;
     };
 
-    const actionMenuEl = document.querySelector('.action-menu');
+    const preventScroll = (e) => {
+        if (document.body.classList.contains('scroll-lock')) e.preventDefault();
+    };
+    document.addEventListener('wheel', preventScroll, { passive: false });
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+
+    // Перемещение aside-left в main после hot-news на ≤767px
+    if (asideLeftEl && pageEl) {
+        const mobileMQ = window.matchMedia('(max-width: 767px)');
+        const hotNews = $('.hot-news', pageEl);
+        const mainEl = $('.main', pageEl) || $('.profile-main', pageEl);
+        let movedToMain = false;
+
+        const moveAside = () => {
+            if (mobileMQ.matches && !movedToMain && mainEl) {
+                const insertAfter = hotNews || mainEl.firstElementChild;
+                if (insertAfter && insertAfter.parentNode === mainEl) {
+                    insertAfter.after(asideLeftEl);
+                } else {
+                    mainEl.prepend(asideLeftEl);
+                }
+                movedToMain = true;
+            } else if (!mobileMQ.matches && movedToMain) {
+                pageEl.prepend(asideLeftEl);
+                movedToMain = false;
+            }
+        };
+
+        mobileMQ.addEventListener('change', moveAside);
+        moveAside();
+    }
+
+    // Sticky aside-left (только на десктопе ≥1026px)
+    if (asideLeftEl && topbarEl) {
+        const desktopMQ = window.matchMedia('(min-width: 1026px)');
+        let isFixed = false;
+        let asideDocTop = 0;
+
+        const resetFixed = () => {
+            if (isFixed) {
+                asideLeftEl.style.cssText = '';
+                isFixed = false;
+            }
+        };
+
+        const update = throttleRAF((fromResize) => {
+            if (!desktopMQ.matches) { resetFixed(); return; }
+            if (document.body.classList.contains('scroll-lock') || asideLeftEl.offsetWidth === 0) return;
+
+            const stickTop = topbarEl.offsetHeight;
+            const scrollY = window.scrollY;
+
+            if (fromResize && isFixed) {
+                asideLeftEl.style.cssText = '';
+                isFixed = false;
+                requestAnimationFrame(() => {
+                    const rect = asideLeftEl.getBoundingClientRect();
+                    asideDocTop = rect.top + scrollY;
+                    update(false);
+                });
+                return;
+            }
+
+            const rect = asideLeftEl.getBoundingClientRect();
+
+            if (!isFixed) {
+                asideDocTop = rect.top + scrollY;
+                if (rect.top <= stickTop) {
+                    isFixed = true;
+                    Object.assign(asideLeftEl.style, {
+                        position: 'fixed',
+                        top: `${stickTop}px`,
+                        left: `${rect.left}px`,
+                        width: `${rect.width}px`,
+                        maxWidth: `${rect.width}px`
+                    });
+                }
+            } else {
+                if (scrollY < asideDocTop - stickTop) {
+                    isFixed = false;
+                    asideLeftEl.style.cssText = '';
+                }
+            }
+        });
+
+        desktopMQ.addEventListener('change', () => { if (!desktopMQ.matches) resetFixed(); });
+        window.addEventListener('scroll', () => update(false), { passive: true });
+        window.addEventListener('resize', () => update(true), { passive: true });
+        update();
+    }
+
+    // Action menu
     document.addEventListener('click', (e) => {
         if (actionMenuEl?.hasAttribute('open') && !actionMenuEl.contains(e.target)) {
             actionMenuEl.removeAttribute('open');
         }
     });
 
-    (function initCommentFormRulesToggle() {
-        const KEY = 'commentFormRulesCollapsed';
-        const block = document.getElementById('comment-hint');
+    // Comment form rules toggle
+    (() => {
+        const block = $('#comment-hint');
         const btn = block?.querySelector('[data-comment-rules-toggle]');
         if (!block || !btn) return;
         const label = (c) => (c ? 'Развернуть правила' : 'Свернуть правила');
-        const isCollapsed = localStorage.getItem(KEY) === 'true';
+        const isCollapsed = localStorage.getItem('commentFormRulesCollapsed') === 'true';
         block.classList.toggle('is-collapsed', isCollapsed);
         btn.setAttribute('aria-expanded', String(!isCollapsed));
         btn.setAttribute('aria-label', label(isCollapsed));
         btn.addEventListener('click', () => {
             const collapsed = block.classList.toggle('is-collapsed');
-            localStorage.setItem(KEY, String(collapsed));
+            localStorage.setItem('commentFormRulesCollapsed', String(collapsed));
             btn.setAttribute('aria-expanded', String(!collapsed));
             btn.setAttribute('aria-label', label(collapsed));
         });
     })();
 
-    const scrollTopBtn = document.querySelector('.scroll-top');
+    // Scroll to top
+    const scrollTopBtn = $('.scroll-top');
     if (scrollTopBtn) {
-        scrollTopBtn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-
-        const handleScroll = throttleRAF(() => {
+        scrollTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        window.addEventListener('scroll', throttleRAF(() => {
             scrollTopBtn.classList.toggle('is-visible', window.scrollY > 200);
-        });
-
-        window.addEventListener('scroll', handleScroll, { passive: true });
+        }), { passive: true });
     }
 
+    // Rating
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.rating-btn');
         if (!btn) return;
-
         const ratingBlock = btn.closest('.card-rating');
-        const valueElement = ratingBlock?.querySelector('.rating-value');
-        if (!ratingBlock || !valueElement) return;
+        const valueEl = ratingBlock?.querySelector('.rating-value');
+        if (!ratingBlock || !valueEl) return;
 
-        const wasUpActive = ratingBlock.querySelector('.rating-up')?.classList.contains('is-active') ?? false;
-        const wasDownActive = ratingBlock.querySelector('.rating-down')?.classList.contains('is-active') ?? false;
-
-        let currentValue = parseInt(valueElement.textContent, 10) || 0;
+        const wasUp = ratingBlock.querySelector('.rating-up')?.classList.contains('is-active') ?? false;
+        const wasDown = ratingBlock.querySelector('.rating-down')?.classList.contains('is-active') ?? false;
+        let value = parseInt(valueEl.textContent, 10) || 0;
         const action = btn.dataset.action;
         const isActive = btn.classList.contains('is-active');
 
         ratingBlock.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('is-active'));
-        const delta = action === 'up' ? (isActive ? -1 : (wasDownActive ? 2 : 1)) : (isActive ? 1 : -(wasUpActive ? 2 : 1));
-        currentValue += delta;
+        const delta = action === 'up'
+            ? (isActive ? -1 : (wasDown ? 2 : 1))
+            : (isActive ? 1 : -(wasUp ? 2 : 1));
         if (!isActive) btn.classList.add('is-active');
-        valueElement.textContent = currentValue;
+        valueEl.textContent = value + delta;
     });
 
+    // Comment handlers (reply, toggle, reveal)
     document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.comment-reply-btn[data-reply-trigger]');
-        if (!btn) return;
-
-        const actions = btn.closest('.comment-actions');
-        const commentBody = btn.closest('.comment-body');
-        if (!actions || !commentBody) return;
-
-        const template = document.getElementById('comment-reply-form-template');
-        if (!template?.content) return;
-
-        const existing = commentBody.querySelector('.comment-reply-form');
-        if (existing) {
-            existing.remove();
+        const replyBtn = e.target.closest('.comment-reply-btn[data-reply-trigger]');
+        if (replyBtn) {
+            const commentBody = replyBtn.closest('.comment-body');
+            const template = $('#comment-reply-form-template')?.content;
+            if (commentBody && template) {
+                const existing = commentBody.querySelector('.comment-reply-form');
+                if (existing) {
+                    existing.remove();
+                } else {
+                    (replyBtn.closest('.comment-actions-row') || replyBtn.closest('.comment-actions'))?.after(template.cloneNode(true));
+                }
+            }
             return;
         }
 
-        const clone = template.content.cloneNode(true);
-        (btn.closest('.comment-actions-row') || actions).after(clone);
+        const toggleBtn = e.target.closest('.comment-toggle-btn[data-comment-toggle], .comment-branch-toggle-btn[data-branch-toggle]');
+        if (toggleBtn) {
+            const item = toggleBtn.closest('.comments-feed-item');
+            if (item) {
+                const isBranch = toggleBtn.matches('[data-branch-toggle]');
+                const cls = isBranch ? 'is-branch-collapsed' : 'is-collapsed';
+                const [openL, closeL] = isBranch
+                    ? ['Развернуть ветку', 'Свернуть ветку']
+                    : ['Развернуть комментарий', 'Свернуть комментарий'];
+                item.classList.toggle(cls);
+                const label = item.classList.contains(cls) ? openL : closeL;
+                toggleBtn.setAttribute('aria-label', label);
+                const tip = toggleBtn.closest('.comment-toggle-wrap')?.querySelector('.comment-toggle-tooltip');
+                if (tip) tip.textContent = label;
+            }
+            return;
+        }
+
+        const veil = e.target.closest('.comment-text-veil');
+        if (veil) veil.closest('.comments-feed-item')?.classList.add('is-revealed');
     });
 
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.comment-toggle-btn[data-comment-toggle], .comment-branch-toggle-btn[data-branch-toggle]');
-        if (!btn) return;
-        const item = btn.closest('.comments-feed-item');
-        if (!item) return;
-        const isBranch = btn.matches('[data-branch-toggle]');
-        const cls = isBranch ? 'is-branch-collapsed' : 'is-collapsed';
-        const [openL, closeL] = isBranch ? ['Развернуть ветку', 'Свернуть ветку'] : ['Развернуть комментарий', 'Свернуть комментарий'];
-        item.classList.toggle(cls);
-        const label = item.classList.contains(cls) ? openL : closeL;
-        btn.setAttribute('aria-label', label);
-        const tip = btn.closest('.comment-toggle-wrap')?.querySelector('.comment-toggle-tooltip');
-        if (tip) tip.textContent = label;
+    document.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.comment-text-veil')) {
+            e.preventDefault();
+            e.target.closest('.comments-feed-item')?.classList.add('is-revealed');
+        }
     });
 
-    (function initCommentRatingStyles() {
-        const list = document.querySelector('.comments-feed-list');
+    // Comment rating styles
+    (() => {
+        const list = $('.comments-feed-list');
         if (!list) return;
 
-        const createHighRatingBadge = () => {
+        const createBadge = () => {
             const wrap = document.createElement('span');
             wrap.className = 'comment-high-rating-wrap';
-            const tooltip = document.createElement('span');
-            tooltip.className = 'comment-high-rating-tooltip';
-            tooltip.setAttribute('aria-hidden', 'true');
-            tooltip.textContent = 'Полезный комментарий';
-            const iconWrap = document.createElement('span');
-            iconWrap.className = 'comment-high-rating-icon';
-            iconWrap.setAttribute('aria-hidden', 'true');
-            iconWrap.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24"><use href="#icon-thumb-up"/></svg>';
-            wrap.append(tooltip, iconWrap);
+            wrap.innerHTML = '<span class="comment-high-rating-tooltip" aria-hidden="true">Полезный комментарий</span><span class="comment-high-rating-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24"><use href="#icon-thumb-up"/></svg></span>';
             return wrap;
         };
 
-        const wrapWithLowRatingVeil = (textEl) => {
+        const wrapWithVeil = (textEl) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'comments-feed-text-wrapper';
-            const veil = document.createElement('span');
-            veil.className = 'comment-text-veil';
-            veil.setAttribute('role', 'button');
-            veil.setAttribute('tabindex', '0');
-            veil.setAttribute('aria-label', 'Показать комментарий');
-            const icon = document.createElement('span');
-            icon.className = 'icon icon--sm comment-text-veil-icon';
-            icon.setAttribute('aria-hidden', 'true');
-            icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-eye"/></svg>';
-            veil.appendChild(icon);
+            wrapper.innerHTML = '<span class="comment-text-veil" role="button" tabindex="0" aria-label="Показать комментарий"><span class="icon icon--sm comment-text-veil-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-eye"/></svg></span></span>';
             textEl.parentNode.insertBefore(wrapper, textEl);
-            wrapper.append(veil, textEl);
-            return wrapper;
+            wrapper.appendChild(textEl);
         };
 
-        list.querySelectorAll('.comments-feed-item').forEach((item) => {
+        $$('.comments-feed-item', list).forEach((item) => {
             const valueEl = item.querySelector('.comment-rating-value');
             if (!valueEl) return;
-            const raw = (valueEl.textContent || '').trim().replace(/\u2212/g, '-');
-            const rating = parseInt(raw, 10);
+            const rating = parseInt((valueEl.textContent || '').trim().replace(/\u2212/g, '-'), 10);
             if (!Number.isFinite(rating)) return;
 
             if (rating >= 5 && !item.classList.contains('comments-feed-item--author')) {
                 item.classList.add('comments-feed-item--high-rating');
                 const meta = item.querySelector('.comments-feed-meta');
-                const authorLink = meta?.querySelector('.comment-author-link');
                 if (meta && !meta.querySelector('.comment-high-rating-icon')) {
-                    meta.insertBefore(createHighRatingBadge(), authorLink?.nextSibling ?? meta.firstChild);
+                    const authorLink = meta.querySelector('.comment-author-link');
+                    meta.insertBefore(createBadge(), authorLink?.nextSibling ?? meta.firstChild);
                 }
             }
 
-            if (rating <= -3) {
+            if (rating <= -3 && !item.querySelector('.comments-feed-text-wrapper')) {
                 item.classList.add('comments-feed-item--low-rating');
-                if (!item.querySelector('.comments-feed-text-wrapper')) {
-                    const textEl = item.querySelector('.comments-feed-text');
-                    if (textEl) wrapWithLowRatingVeil(textEl);
-                }
+                const textEl = item.querySelector('.comments-feed-text');
+                if (textEl) wrapWithVeil(textEl);
             }
         });
     })();
 
+    // Comment sort
     document.addEventListener('click', (e) => {
         const option = e.target.closest('.comments-feed-sort-option');
         if (option) {
             e.preventDefault();
             const dropdown = option.closest('.comments-feed-sort-dropdown');
             const triggerText = dropdown?.querySelector('.comments-feed-sort-trigger-text');
-            if (!dropdown || !triggerText) return;
-            triggerText.textContent = option.textContent.trim();
-            dropdown.querySelectorAll('.comments-feed-sort-option').forEach((o) => o.classList.remove('is-active'));
-            option.classList.add('is-active');
-            dropdown.removeAttribute('open');
+            if (dropdown && triggerText) {
+                triggerText.textContent = option.textContent.trim();
+                $$('.comments-feed-sort-option', dropdown).forEach((o) => o.classList.remove('is-active'));
+                option.classList.add('is-active');
+                dropdown.removeAttribute('open');
+            }
             return;
         }
-        const openDropdown = document.querySelector('.comments-feed-sort-dropdown[open]');
+        const openDropdown = $('.comments-feed-sort-dropdown[open]');
         if (openDropdown && !openDropdown.contains(e.target)) openDropdown.removeAttribute('open');
     });
 
-    const revealVeil = (target) => {
-        const item = target?.closest('.comment-text-veil')?.closest('.comments-feed-item');
-        if (item) item.classList.add('is-revealed');
-    };
-    document.addEventListener('click', (e) => revealVeil(e.target));
-    document.addEventListener('keydown', (e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.comment-text-veil')) {
-            e.preventDefault();
-            revealVeil(e.target);
-        }
-    });
-
+    // Card tags popup
     const closeCardTagsPopup = (popup, trigger) => {
         if (document.activeElement && popup.contains(document.activeElement)) trigger.focus();
         popup.setAttribute('hidden', '');
@@ -276,21 +344,32 @@
             const mobile = trigger.closest('.card-tags-mobile');
             const popup = mobile?.querySelector('.card-tags-popup');
             const tagsSource = trigger.closest('.card-footer')?.querySelector('.card-footer-tags');
-            if (!popup || !tagsSource) return;
-
-            if (trigger.getAttribute('aria-expanded') === 'true') {
-                closeCardTagsPopup(popup, trigger);
-            } else {
-                document.querySelectorAll('.card-tags-popup').forEach((p) => p.setAttribute('hidden', ''));
-                document.querySelectorAll('.card-tags-trigger').forEach((t) => t.setAttribute('aria-expanded', 'false'));
-                popup.innerHTML = '';
-                tagsSource.querySelectorAll('a.tag').forEach((a) => popup.appendChild(a.cloneNode(true)));
-                popup.removeAttribute('hidden');
-                trigger.setAttribute('aria-expanded', 'true');
+            if (popup && tagsSource) {
+                if (trigger.getAttribute('aria-expanded') === 'true') {
+                    closeCardTagsPopup(popup, trigger);
+                } else {
+                    $$('.card-tags-popup').forEach((p) => p.setAttribute('hidden', ''));
+                    $$('.card-tags-trigger').forEach((t) => t.setAttribute('aria-expanded', 'false'));
+                    popup.innerHTML = '';
+                    $$('a.tag', tagsSource).forEach((a) => popup.appendChild(a.cloneNode(true)));
+                    popup.removeAttribute('hidden');
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
             }
             return;
         }
-        const openPopup = document.querySelector('.card-tags-popup:not([hidden])');
+
+        const tagLink = e.target.closest('.card-tags-popup a.tag');
+        if (tagLink) {
+            const popup = tagLink.closest('.card-tags-popup');
+            const trigger = popup?.closest('.card-tags-mobile')?.querySelector('.card-tags-trigger');
+            if (trigger) {
+                closeCardTagsPopup(popup, trigger);
+                return;
+            }
+        }
+
+        const openPopup = $('.card-tags-popup:not([hidden])');
         if (openPopup) {
             const mobile = openPopup.closest('.card-tags-mobile');
             const t = mobile?.querySelector('.card-tags-trigger');
@@ -298,55 +377,22 @@
         }
     });
 
-    document.addEventListener('keydown', (e) => {
-        if (e.key !== 'Escape') return;
-        let closed = false;
-        const cardTagsTrigger = document.querySelector('.card-tags-trigger[aria-expanded="true"]');
-        if (cardTagsTrigger) {
-            const popup = cardTagsTrigger.closest('.card-tags-mobile')?.querySelector('.card-tags-popup');
-            if (popup) {
-                closeCardTagsPopup(popup, cardTagsTrigger);
-                closed = true;
-            }
-        } else if (searchPopup?.getAttribute('aria-hidden') === 'false') {
-            closeSearchPopup();
-            closed = true;
-        } else if (lightbox?.getAttribute('aria-hidden') === 'false') {
-            closeLightbox();
-            closed = true;
-        }
-        if (closed) e.preventDefault();
-    });
-
-    document.addEventListener('click', (e) => {
-        const tagLink = e.target.closest('.card-tags-popup a.tag');
-        if (tagLink) {
-            const popup = tagLink.closest('.card-tags-popup');
-            const trigger = popup?.closest('.card-tags-mobile')?.querySelector('.card-tags-trigger');
-            if (trigger) closeCardTagsPopup(popup, trigger);
-        }
-    });
-
-    const searchPopup = document.querySelector('.search-popup');
-    const searchPopupClose = document.querySelector('.search-popup-close');
-    const searchPopupInput = document.querySelector('.search-popup-input');
-    const searchPopupOverlay = document.querySelector('.search-popup-overlay');
-    const searchPopupForm = document.querySelector('.search-popup-form');
-
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.querySelector('.lightbox-img');
-    const lightboxBackdrop = document.querySelector('.lightbox-backdrop');
+    // Modals (search, lightbox)
+    const searchPopup = $('.search-popup');
+    const searchPopupInput = $('.search-popup-input');
+    const searchPopupForm = $('.search-popup-form');
+    const lightbox = $('#lightbox');
+    const lightboxImg = $('.lightbox-img');
     let lightboxOpener = null;
     let lightboxOpenerTabindex = null;
 
     const closeSearchPopup = () => {
         if (searchPopup) {
-            const searchTrigger = document.querySelector('[data-search-trigger]');
-            if (searchTrigger) searchTrigger.focus({ preventScroll: true });
+            $('[data-search-trigger]')?.focus({ preventScroll: true });
             searchPopup.setAttribute('aria-hidden', 'true');
             searchPopup.setAttribute('inert', '');
         }
-        unlockBodyScroll();
+        unlockScroll();
     };
 
     const closeLightbox = () => {
@@ -356,7 +402,7 @@
         lightboxOpenerTabindex = null;
         if (lightbox) lightbox.setAttribute('aria-hidden', 'true');
         if (lightboxImg) lightboxImg.removeAttribute('src');
-        unlockBodyScroll();
+        unlockScroll();
         if (opener) {
             if (savedTabindex != null) opener.setAttribute('tabindex', savedTabindex);
             else opener.removeAttribute('tabindex');
@@ -364,27 +410,47 @@
         }
     };
 
+    // Escape key для модалок
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const cardTagsTrigger = $('.card-tags-trigger[aria-expanded="true"]');
+        if (cardTagsTrigger) {
+            const popup = cardTagsTrigger.closest('.card-tags-mobile')?.querySelector('.card-tags-popup');
+            if (popup) {
+                closeCardTagsPopup(popup, cardTagsTrigger);
+                e.preventDefault();
+                return;
+            }
+        }
+        if (searchPopup?.getAttribute('aria-hidden') === 'false') {
+            closeSearchPopup();
+            e.preventDefault();
+        } else if (lightbox?.getAttribute('aria-hidden') === 'false') {
+            closeLightbox();
+            e.preventDefault();
+        }
+    });
+
+    // Search popup
     if (searchPopup) {
         const openPopup = () => {
-            lockBodyScroll();
-            searchPopup.setAttribute('aria-hidden', 'false');
-            searchPopup.removeAttribute('inert');
-
-            if (actionMenuEl?.hasAttribute('open')) actionMenuEl.removeAttribute('open');
-
-            if (searchPopupInput) {
-                setTimeout(() => searchPopupInput.focus({ preventScroll: true }), 100);
-            }
+            lockScroll();
+            requestAnimationFrame(() => {
+                searchPopup.setAttribute('aria-hidden', 'false');
+                searchPopup.removeAttribute('inert');
+                if (actionMenuEl?.hasAttribute('open')) actionMenuEl.removeAttribute('open');
+                if (searchPopupInput) setTimeout(() => searchPopupInput.focus({ preventScroll: true }), 100);
+            });
         };
 
         document.addEventListener('click', (e) => {
-            const searchTrigger = e.target.closest('[data-search-trigger]');
-            if (!searchTrigger) return;
+            const trigger = e.target.closest('[data-search-trigger]');
+            if (!trigger) return;
             e.preventDefault();
             (searchPopup.getAttribute('aria-hidden') === 'true' ? openPopup : closeSearchPopup)();
         });
 
-        [searchPopupClose, searchPopupOverlay].forEach((el) => el?.addEventListener('click', closeSearchPopup));
+        $$('.search-popup-close, .search-popup-overlay').forEach((el) => el?.addEventListener('click', closeSearchPopup));
 
         if (searchPopupForm && searchPopupInput) {
             searchPopupForm.addEventListener('submit', (e) => {
@@ -395,16 +461,19 @@
         }
     }
 
+    // Lightbox
     if (lightbox && lightboxImg) {
         const openLightbox = (src, opener) => {
-            lockBodyScroll();
-            lightboxOpener = opener || null;
-            lightboxOpenerTabindex = opener ? opener.getAttribute('tabindex') : null;
-            if (opener) opener.setAttribute('tabindex', '-1');
-            lightboxImg.src = src;
-            lightboxImg.alt = '';
-            lightbox.setAttribute('aria-hidden', 'false');
-            requestAnimationFrame(() => lightboxImg.focus());
+            lockScroll();
+            requestAnimationFrame(() => {
+                lightboxOpener = opener || null;
+                lightboxOpenerTabindex = opener ? opener.getAttribute('tabindex') : null;
+                if (opener) opener.setAttribute('tabindex', '-1');
+                lightboxImg.src = src;
+                lightboxImg.alt = '';
+                lightbox.setAttribute('aria-hidden', 'false');
+                lightboxImg.focus();
+            });
         };
 
         document.addEventListener('click', (e) => {
@@ -416,50 +485,46 @@
             openLightbox(img.src, cardImage);
         });
 
-        if (lightboxBackdrop) {
-            lightboxBackdrop.addEventListener('click', closeLightbox);
-        }
+        $('.lightbox-backdrop')?.addEventListener('click', closeLightbox);
     }
 
-    const ASIDE_WIDGETS_STORAGE_KEY = 'niwado-aside-widgets-open';
-
-    const getWidgetKey = (el) => el.className.match(/widget--([a-z0-9_-]+)/i)?.[1] ?? null;
-
-    const readAsideWidgetsState = () => {
-        try {
-            return JSON.parse(localStorage.getItem(ASIDE_WIDGETS_STORAGE_KEY) || '{}');
-        } catch {
-            return {};
-        }
-    };
-
-    const saveAsideWidgetsState = (asideContainer) => {
-        if (!asideContainer) return;
-        const state = {};
-        asideContainer.querySelectorAll('.widget').forEach((details) => {
-            const key = getWidgetKey(details);
-            if (key) state[key] = details.hasAttribute('open');
-        });
-        try {
-            localStorage.setItem(ASIDE_WIDGETS_STORAGE_KEY, JSON.stringify(state));
-        } catch (_) { }
-    };
-
+    // Aside widgets state
     if (asideEl) {
-        const stored = readAsideWidgetsState();
-        asideEl.querySelectorAll('.widget').forEach((details) => {
+        const KEY = 'niwado-aside-widgets-open';
+        const getWidgetKey = (el) => el.className.match(/widget--([a-z0-9_-]+)/i)?.[1] ?? null;
+        const readState = () => {
+            try {
+                return JSON.parse(localStorage.getItem(KEY) || '{}');
+            } catch {
+                return {};
+            }
+        };
+        const saveState = () => {
+            const state = {};
+            $$('.widget', asideEl).forEach((details) => {
+                const key = getWidgetKey(details);
+                if (key) state[key] = details.hasAttribute('open');
+            });
+            try {
+                localStorage.setItem(KEY, JSON.stringify(state));
+            } catch { }
+        };
+
+        const stored = readState();
+        $$('.widget', asideEl).forEach((details) => {
             const key = getWidgetKey(details);
             if (key && stored[key] !== undefined) {
                 details.toggleAttribute('open', stored[key]);
             }
-            details.addEventListener('toggle', () => saveAsideWidgetsState(asideEl));
+            details.addEventListener('toggle', saveState);
         });
     }
 
-    (function initProfileActivityTabs() {
-        const section = document.querySelector('.profile-activity-tabs');
-        const tabPosts = document.getElementById('profile-tab-posts');
-        const tabComments = document.getElementById('profile-tab-comments');
+    // Profile activity tabs
+    (() => {
+        const section = $('.profile-activity-tabs');
+        const tabPosts = $('#profile-tab-posts');
+        const tabComments = $('#profile-tab-comments');
         if (!section || !tabPosts || !tabComments) return;
         const setTab = (posts) => {
             section.classList.toggle('profile-activity-tabs--posts', posts);
