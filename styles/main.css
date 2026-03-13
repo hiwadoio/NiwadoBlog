@@ -52,7 +52,7 @@
     --gray-700: #3c4043;
     --gray-900: #202124;
 
-    --topbar-height: 3.75375rem;
+    --topbar-height: 3.75rem;
     --aside-narrow-width: 240px;
 
     --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
@@ -103,9 +103,11 @@ pre {
 html {
     font-size: 100%;
     scroll-behavior: smooth;
+    scroll-padding-top: var(--topbar-height);
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     overflow-y: scroll;
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 body {
@@ -122,6 +124,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
+    height: var(--topbar-height);
     display: flex;
     align-items: center;
     background: var(--dark-bg);
@@ -132,17 +135,18 @@ body {
 }
 
 html.scroll-lock {
-    overflow: hidden;
+    /* overflow: hidden; */ 
+    /* Removed overflow:hidden to preserve sticky positioning */
 }
 
 /* Топбар в fixed, чтобы оставаться видимым при прокрутке. */
-body.scroll-lock .topbar {
+/* body.scroll-lock .topbar {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 101;
-}
+} */
 
 /* Компенсация прыжка main: padding-top применяется через инлайн-стиль в JS для максимальной синхронности. */
 
@@ -832,11 +836,17 @@ body.scroll-lock .lightbox {
     box-sizing: border-box;
 }
 
-@media (min-width: 1026px) {
-    .page {
-        padding: 0 5.5em;
+    @media (min-width: 1026px) {
+        .page {
+            padding: 0 1.5rem;
+        }
     }
-}
+
+    @media (min-width: 1400px) {
+        .page {
+            padding: 0 5.5em;
+        }
+    }
 
 .divider {
     display: none;
@@ -845,12 +855,14 @@ body.scroll-lock .lightbox {
     align-self: stretch;
 }
 
-.main {
+.main,
+.feed,
+.profile-main {
     margin-top: 0;
 }
 
 .profile-main {
-    margin-top: 0;
+    /* Keep specific profile styles if any, merging common ones */
 }
 
 .profile-wrapper {
@@ -2011,7 +2023,8 @@ a.profile-activity-item:hover .profile-activity-item-content .profile-activity-i
     margin-bottom: 0;
 }
 
-.main>.card-wrapper:first-child .card {
+.main>.card-wrapper:first-child .card,
+.feed>.card-wrapper:first-child .card {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
 }

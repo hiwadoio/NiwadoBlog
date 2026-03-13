@@ -1,21 +1,30 @@
 /* ============================================
    responsive.css — Adaptive layout for NiwadoBlog
-
-   Base (main.css) defaults:
-     .page                 grid-template-columns: 1fr  (single column)
-     .aside-left           display: none
-     .divider              display: none
-     .menu                 display: flex  (visible)
-     .mobile-menu          display: none
-     .action-divider       display: none
-     .card-footer-tags     visible
-     .card-tags-mobile     display: none
-     .scroll-top           full-height left strip
-
-   main.css already contains:
-     @media (min-width:1026px) { .page { padding: 0 5.5em } }
-     @media (max-width:599px)  { profile mobile styles }
+   Refactored for Grid Areas & better adaptivity
    ============================================ */
+
+/* ---- Grid Area Definitions ---- */
+.aside-left {
+    grid-area: nav;
+}
+
+.hot-news {
+    grid-area: news;
+}
+
+.main,
+.feed,
+.profile-main {
+    grid-area: feed;
+}
+
+.divider {
+    grid-area: div;
+}
+
+.aside {
+    grid-area: sidebar;
+}
 
 /* ---- Touch devices ---- */
 @media (hover: none) and (pointer: coarse) {
@@ -32,40 +41,35 @@
 }
 
 /* ============================================
-   DESKTOP (≥1026px)
-   4-column grid: aside-left | main | divider | aside
-   ============================================ */
+       DESKTOP (≥1026px)
+       4-column grid: nav | content | divider | sidebar
+       ============================================ */
 @media (min-width: 1026px) {
     .page {
         grid-template-columns: var(--aside-narrow-width, 240px) 1fr 1px 310px;
+        /* Default layout (e.g. Article, Profile) */
+        grid-template-areas: "nav feed div sidebar";
+        gap: var(--spacing-lg);
     }
 
-    .page>.aside-left {
-        grid-column: 1;
+    .page.page-home {
+        /* Home layout with Hot News */
+        grid-template-areas:
+            "nav news div sidebar"
+            "nav feed div sidebar";
     }
 
-    .page>.main,
-    .page>.profile-main,
-    .page>section.main {
-        grid-column: 2;
-    }
-
-    .page>.divider {
-        grid-column: 3;
+    .divider {
         display: block;
-    }
-
-    .page>.aside {
-        grid-column: 4;
     }
 
     .aside-left {
         display: block;
-        position: relative;
+        position: sticky;
+        top: var(--topbar-height, 3.75rem);
         padding-top: var(--spacing-lg);
-        max-height: calc(100dvh - var(--topbar-height, 3.75375rem));
+        max-height: calc(100vh - var(--topbar-height, 3.75rem));
         overflow-y: auto;
-        overflow-x: visible;
         scrollbar-width: thin;
         scrollbar-color: rgba(107, 114, 128, 0.3) transparent;
     }
@@ -86,10 +90,29 @@
     .aside-left::-webkit-scrollbar-thumb:hover {
         background: rgba(107, 114, 128, 0.5);
     }
+
+    .aside {
+        position: sticky;
+        top: var(--topbar-height, 3.75rem);
+        max-height: calc(100vh - var(--topbar-height, 3.75rem));
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(107, 114, 128, 0.3) transparent;
+    }
 }
 
 /* ============================================
-   BELOW DESKTOP (<1026px) — shared tablet / mobile
+       COMPACT DESKTOP (1026px – 1360px)
+       Optimization for narrower desktop screens
+       ============================================ */
+@media (min-width: 1026px) and (max-width: 1360px) {
+    .page {
+        grid-template-columns: 210px 1fr 1px 280px;
+    }
+}
+
+/* ============================================
+   TABLET & MOBILE SHARED (<1026px)
    ============================================ */
 @media (max-width: 1025px) {
     .menu {
@@ -127,7 +150,6 @@
         gap: 0.5rem;
     }
 
-    /* Scroll-top: small floating circle at bottom-right */
     .scroll-top {
         inset: auto;
         right: 1rem;
@@ -143,47 +165,61 @@
         transform: none;
     }
 
-    /* Widget first-child top radius (no longer connects to topbar) */
     .aside .widget:first-child {
-        border-top-left-radius: 6px;
-        border-top-right-radius: 6px;
+        border-radius: 6px;
+    }
+
+    /* Hide divider on smaller screens */
+    .divider {
+        display: none;
     }
 }
 
 /* ============================================
-   TABLET LANDSCAPE (768px – 1025px)
-   2-column: aside-left (200px) | main
-   aside-right below, full width
-   ============================================ */
+       TABLET LANDSCAPE (768px – 1025px)
+       2-column: nav | content
+       Sidebar moves to bottom
+       ============================================ */
 @media (min-width: 768px) and (max-width: 1025px) {
     .page {
         padding: 0 1.5rem;
         grid-template-columns: 200px 1fr;
+        /* Default tablet */
+        grid-template-areas:
+            "nav feed"
+            "sidebar sidebar";
         column-gap: 1rem;
     }
 
-    .page>.aside-left {
-        grid-column: 1;
-    }
-
-    .page>.main,
-    .page>.profile-main,
-    .page>section.main {
-        grid-column: 2;
-    }
-
-    .page>.divider {
-        display: none;
-    }
-
-    .page>.aside {
-        grid-column: 1 / -1;
-        margin-top: 0.5rem;
+    .page.page-home {
+        /* Home tablet */
+        grid-template-areas:
+            "nav news"
+            "nav feed"
+            "sidebar sidebar";
     }
 
     .aside-left {
         display: block;
         padding-top: 1rem;
+        /* Remove sticky for tablet to avoid overlap issues */
+        position: static;
+        max-height: none;
+        overflow: visible;
+        margin-bottom: 1rem;
+    }
+
+    .aside {
+        margin-top: 0.5rem;
+        display: block;
+        column-count: 2;
+        column-gap: 1rem;
+    }
+
+    .aside .widget {
+        margin-bottom: 1rem;
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
 
     .card-image {
@@ -200,26 +236,80 @@
 }
 
 /* ============================================
-   ≤767px — aside-left перемещается в main (через JS)
-   Общие стили для aside-left внутри main
+   MOBILE & TABLET PORTRAIT (<768px)
+   Single column stack: News -> Nav -> Feed -> Sidebar
    ============================================ */
 @media (max-width: 767px) {
+    .page {
+        grid-template-columns: 1fr;
+        /* Default mobile */
+        grid-template-areas:
+            "nav"
+            "feed"
+            "sidebar";
+        gap: 1rem;
+    }
+
+    .page.page-home {
+        /* Home mobile */
+        grid-template-areas:
+            "news"
+            "nav"
+            "feed"
+            "sidebar";
+    }
+
     .aside-left {
+        display: none;
+    }
+
+    .page.page-home .aside-left {
         display: block;
         margin-bottom: var(--spacing-lg);
         padding: 0;
         background: none;
         box-shadow: none;
+        /* Reset sticky for mobile flow */
+        position: static;
+        max-height: none;
+        overflow: hidden;
+        /* Changed from visible to prevent grid blowout */
+        margin-left: -0.5rem;
+        /* Visual alignment compensation */
+        margin-right: -0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        min-width: 0;
+        /* Critical for Grid Item to allow shrinking */
+        width: auto;
+    }
+
+    .aside-left .aside-left-title {
+        display: none;
     }
 
     .aside-left-menu.widget-menu {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.3rem;
+        flex-wrap: nowrap;
+        gap: 0.35rem;
+        /* Slightly tighter gap */
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        mask-image: linear-gradient(to right, black 90%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+        max-width: 100%;
+        /* Ensure flex container doesn't force width */
+    }
+
+    .aside-left-menu.widget-menu::-webkit-scrollbar {
+        display: none;
     }
 
     .aside-left-menu.widget-menu li {
         margin: 0;
+        flex-shrink: 0;
     }
 
     .aside-left-menu.widget-menu li:not(:last-child) {
@@ -227,30 +317,41 @@
     }
 
     .aside-left-menu.widget-menu li a {
-        display: inline-block;
-        font-size: 0.6875rem;
-        padding: 0.25rem 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8125rem;
+        padding: 0.35rem 0.75rem;
         min-height: auto;
-        border-radius: 3px;
+        border-radius: 999px;
         background: rgba(0, 0, 0, 0.04);
-        color: var(--muted);
-        font-weight: 400;
+        /* Minimalist gray bg */
+        border: none;
+        /* Removed border */
+        color: var(--text);
+        font-weight: 500;
         line-height: 1.3;
+        white-space: nowrap;
+        box-shadow: none;
+        /* Removed shadow */
+        transition: all var(--transition-fast);
+    }
+
+    /* Reset padding for the first item (Digital) */
+    .aside-left-menu.widget-menu li:first-child a {
+        padding-left: 0.75rem;
     }
 
     .aside-left-menu.widget-menu li a:hover {
-        background: rgba(26, 115, 232, 0.08);
-        color: var(--accent);
+        background: rgba(0, 0, 0, 0.08);
+        /* Slightly darker on hover */
+        color: var(--text);
+        transform: none;
+        /* Removed movement */
     }
 
-    .aside-left-menu.widget-menu .aside-left-menu-icon {
-        display: none;
-    }
-
-    .aside-left-footer {
-        display: none;
-    }
-
+    .aside-left-menu.widget-menu .aside-left-menu-icon,
+    .aside-left-footer,
     .aside-left-category-tooltip {
         display: none;
     }
@@ -258,18 +359,13 @@
 
 /* ============================================
    TABLET PORTRAIT (480px – 767px)
-   single column, aside-left inside main
    ============================================ */
 @media (min-width: 480px) and (max-width: 767px) {
     .page {
         padding: 0 1rem;
     }
 
-    .page>.divider {
-        display: none;
-    }
-
-    .page>.aside {
+    .aside {
         margin-top: 0.5rem;
     }
 
@@ -292,10 +388,7 @@
     }
 
     .card-footer {
-        margin-top: 0.75rem;
-        margin-left: -1.25rem;
-        margin-right: -1.25rem;
-        margin-bottom: -1rem;
+        margin: 0.75rem -1.25rem -1rem;
         padding: 0.75rem 1.25rem;
         font-size: 0.8125rem;
     }
@@ -323,8 +416,7 @@
 }
 
 /* ============================================
-   MOBILE (360px – 479px) — single column
-   aside-left hidden (base default)
+   MOBILE (360px – 479px)
    ============================================ */
 @media (min-width: 360px) and (max-width: 479px) {
     .page {
@@ -351,10 +443,7 @@
     }
 
     .card-footer {
-        margin-top: 0.625rem;
-        margin-left: -1rem;
-        margin-right: -1rem;
-        margin-bottom: -0.875rem;
+        margin: 0.625rem -1rem -0.875rem;
         padding: 0.625rem 1rem;
         font-size: 0.75rem;
     }
@@ -397,10 +486,7 @@
         height: min(60vw, 180px);
     }
 
-    .search-popup-sections-grid {
-        grid-template-columns: 1fr;
-    }
-
+    .search-popup-sections-grid,
     .similar-news-grid {
         grid-template-columns: 1fr;
     }
@@ -460,10 +546,7 @@
     }
 
     .card-footer {
-        margin-top: 0.5rem;
-        margin-left: -0.75rem;
-        margin-right: -0.75rem;
-        margin-bottom: -0.75rem;
+        margin: 0.5rem -0.75rem -0.75rem;
         padding: 0.5rem 0.75rem;
         font-size: 0.6875rem;
         gap: 0.25rem;
@@ -521,10 +604,7 @@
         height: min(70vw, 160px);
     }
 
-    .search-popup-sections-grid {
-        grid-template-columns: 1fr;
-    }
-
+    .search-popup-sections-grid,
     .similar-news-grid {
         grid-template-columns: 1fr;
     }

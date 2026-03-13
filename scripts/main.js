@@ -22,18 +22,8 @@
     const pageEl = $('.page');
     const actionMenuEl = $('.action-menu');
 
-    // Создание обёртки для контента
-    if (topbarEl && !$('.main-scroll-wrap')) {
-        const wrap = document.createElement('div');
-        wrap.className = 'main-scroll-wrap';
-        let el = topbarEl.nextElementSibling;
-        while (el) {
-            const next = el.nextElementSibling;
-            if (!el.matches('.search-popup, .lightbox')) wrap.appendChild(el);
-            el = next;
-        }
-        topbarEl.after(wrap);
-    }
+    // Создание обёртки для контента - REMOVED
+
 
     // Блокировка скролла
     let scrollLockCount = 0;
@@ -42,18 +32,6 @@
 
     const lockScroll = () => {
         if (++scrollLockCount > 1) return;
-        const scrollY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
-        savedScrollY = scrollY;
-        const sb = getScrollbarWidth();
-        const topbarH = topbarEl?.offsetHeight || 0;
-
-        if (pageEl && topbarH > 0) pageEl.style.paddingTop = `${topbarH}px`;
-        if (topbarEl && sb > 0) topbarEl.style.paddingRight = `${sb}px`;
-        if (asideEl && sb > 0) asideEl.style.transform = `translateX(-${sb}px)`;
-
-        const bodyStyle = document.body.style;
-        bodyStyle.cssText = `position:fixed;top:-${scrollY}px;left:0;right:0;width:100%;overflow:hidden;${sb > 0 ? `padding-right:${sb}px;` : ''}`;
-        document.documentElement.style.overflow = 'hidden';
         document.body.classList.add('scroll-lock');
         document.documentElement.classList.add('scroll-lock');
     };
@@ -62,109 +40,25 @@
         if (scrollLockCount === 0 || --scrollLockCount > 0) return;
         document.body.classList.remove('scroll-lock');
         document.documentElement.classList.remove('scroll-lock');
-        document.body.style.cssText = '';
-        document.documentElement.style.overflow = '';
-        if (topbarEl) topbarEl.style.paddingRight = '';
-        if (pageEl) pageEl.style.paddingTop = '';
-        if (asideEl) asideEl.style.transform = '';
-
-        const prevBehavior = document.documentElement.style.scrollBehavior;
-        document.documentElement.style.scrollBehavior = 'auto';
-        window.scrollTo(0, savedScrollY);
-        document.documentElement.style.scrollBehavior = prevBehavior;
-        savedScrollY = 0;
     };
 
     const preventScroll = (e) => {
-        if (document.body.classList.contains('scroll-lock')) e.preventDefault();
+        if (document.body.classList.contains('scroll-lock')) {
+            e.preventDefault();
+        }
     };
+
+    const preventKeys = (e) => {
+        if (document.body.classList.contains('scroll-lock')) {
+            if (['ArrowUp', 'ArrowDown', 'Space', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.code)) {
+                e.preventDefault();
+            }
+        }
+    };
+
     document.addEventListener('wheel', preventScroll, { passive: false });
     document.addEventListener('touchmove', preventScroll, { passive: false });
-
-    // Перемещение aside-left в main после hot-news на ≤767px
-    if (asideLeftEl && pageEl) {
-        const mobileMQ = window.matchMedia('(max-width: 767px)');
-        const hotNews = $('.hot-news', pageEl);
-        const mainEl = $('.main', pageEl) || $('.profile-main', pageEl);
-        let movedToMain = false;
-
-        const moveAside = () => {
-            if (mobileMQ.matches && !movedToMain && mainEl) {
-                const insertAfter = hotNews || mainEl.firstElementChild;
-                if (insertAfter && insertAfter.parentNode === mainEl) {
-                    insertAfter.after(asideLeftEl);
-                } else {
-                    mainEl.prepend(asideLeftEl);
-                }
-                movedToMain = true;
-            } else if (!mobileMQ.matches && movedToMain) {
-                pageEl.prepend(asideLeftEl);
-                movedToMain = false;
-            }
-        };
-
-        mobileMQ.addEventListener('change', moveAside);
-        moveAside();
-    }
-
-    // Sticky aside-left (только на десктопе ≥1026px)
-    if (asideLeftEl && topbarEl) {
-        const desktopMQ = window.matchMedia('(min-width: 1026px)');
-        let isFixed = false;
-        let asideDocTop = 0;
-
-        const resetFixed = () => {
-            if (isFixed) {
-                asideLeftEl.style.cssText = '';
-                isFixed = false;
-            }
-        };
-
-        const update = throttleRAF((fromResize) => {
-            if (!desktopMQ.matches) { resetFixed(); return; }
-            if (document.body.classList.contains('scroll-lock') || asideLeftEl.offsetWidth === 0) return;
-
-            const stickTop = topbarEl.offsetHeight;
-            const scrollY = window.scrollY;
-
-            if (fromResize && isFixed) {
-                asideLeftEl.style.cssText = '';
-                isFixed = false;
-                requestAnimationFrame(() => {
-                    const rect = asideLeftEl.getBoundingClientRect();
-                    asideDocTop = rect.top + scrollY;
-                    update(false);
-                });
-                return;
-            }
-
-            const rect = asideLeftEl.getBoundingClientRect();
-
-            if (!isFixed) {
-                asideDocTop = rect.top + scrollY;
-                if (rect.top <= stickTop) {
-                    isFixed = true;
-                    Object.assign(asideLeftEl.style, {
-                        position: 'fixed',
-                        top: `${stickTop}px`,
-                        left: `${rect.left}px`,
-                        width: `${rect.width}px`,
-                        maxWidth: `${rect.width}px`
-                    });
-                }
-            } else {
-                if (scrollY < asideDocTop - stickTop) {
-                    isFixed = false;
-                    asideLeftEl.style.cssText = '';
-                }
-            }
-        });
-
-        desktopMQ.addEventListener('change', () => { if (!desktopMQ.matches) resetFixed(); });
-        window.addEventListener('scroll', () => update(false), { passive: true });
-        window.addEventListener('resize', () => update(true), { passive: true });
-        update();
-    }
+    document.addEventListener('keydown', preventKeys, { passive: false });
 
     // Action menu
     document.addEventListener('click', (e) => {
